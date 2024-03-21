@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS hotel (
   email varchar(100) NOT NULL CHECK (email LIKE '_%@_%._%'),
   phone_num CHAR(10) NOT NULL CHECK (phone_num not like '%[^0-9]%'),
   PRIMARY KEY (name, streetNum),
-  FOREIGN KEY (chain_name) REFERENCES hotelChain(name)
+  FOREIGN KEY (chain_name) REFERENCES hotelChain(name) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- ----------------------------
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS room (
     amenities varchar(100) NOT NULL,
     expandable boolean NOT NULL,
     problems varchar(100),
-    FOREIGN KEY (hotel_name, hotel_num) REFERENCES hotel (name, streetNum),
+    FOREIGN KEY (hotel_name, hotel_num) REFERENCES hotel (name, streetNum) ON DELETE CASCADE ON UPDATE CASCADE,
     PRIMARY KEY (room_num, hotel_name, hotel_num)
 );
 
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS employee (
     position varchar(45) NOT NULL,
     hotel_name varchar(45),
     hotel_num int,
-    FOREIGN KEY (hotel_name, hotel_num) REFERENCES hotel (name, streetNum)
+    FOREIGN KEY (hotel_name, hotel_num) REFERENCES hotel (name, streetNum) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- ----------------------------
@@ -93,8 +93,8 @@ CREATE TABLE IF NOT EXISTS renting (
     room_price int NOT NULL CHECK (room_price >= 0),
     hotel_name varchar(45),
     hotel_num int,
-    FOREIGN KEY (room_num, hotel_name, hotel_num) REFERENCES room (room_num, hotel_name, hotel_num),
-    FOREIGN KEY (customerID) REFERENCES customer (id),
+    FOREIGN KEY (room_num, hotel_name, hotel_num) REFERENCES room (room_num, hotel_name, hotel_num) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (customerID) REFERENCES customer (id) ON DELETE CASCADE ON UPDATE CASCADE,
     PRIMARY KEY (startDate, endDate, customerID)
 );
 
@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS reserves (
     room_num int,
     hotel_name varchar(45),
     hotel_num int,
-    FOREIGN KEY (room_num, hotel_name, hotel_num) REFERENCES room (room_num, hotel_name, hotel_num),
+    FOREIGN KEY (room_num, hotel_name, hotel_num) REFERENCES room (room_num, hotel_name, hotel_num) ON DELETE CASCADE ON UPDATE CASCADE,
     PRIMARY KEY (startDate, endDate, room_num, hotel_name, hotel_num)
 );
 
@@ -124,8 +124,8 @@ CREATE TABLE IF NOT EXISTS booking (
     room_num int,
     hotel_name varchar(45),
     hotel_num int,
-    FOREIGN KEY (startDate, endDate, room_num, hotel_name, hotel_num) REFERENCES reserves (startDate, endDate, room_num, hotel_name, hotel_num),
-    FOREIGN KEY (customerID) REFERENCES customer (id),
+    FOREIGN KEY (startDate, endDate, room_num, hotel_name, hotel_num) REFERENCES reserves (startDate, endDate, room_num, hotel_name, hotel_num) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (customerID) REFERENCES customer (id) ON DELETE CASCADE ON UPDATE CASCADE,
     PRIMARY KEY (startDate, endDate, customerID)
 );
 
@@ -138,8 +138,8 @@ CREATE TABLE IF NOT EXISTS checks_in(
     renting_endDate date,
     customerID int,
     employeeID int,
-    FOREIGN KEY (employeeID) REFERENCES employee (id),
-    FOREIGN KEY (renting_startDate, renting_endDate, customerID) REFERENCES renting (startDate, endDate, customerID),
+    FOREIGN KEY (employeeID) REFERENCES employee (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (renting_startDate, renting_endDate, customerID) REFERENCES renting (startDate, endDate, customerID) ON DELETE CASCADE ON UPDATE CASCADE,
     PRIMARY KEY (renting_startDate, renting_endDate, customerID)
 );
 
@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS renting_archive(
     startDate date,
     endDate date,
     customerID int,
-    FOREIGN KEY (startDate, endDate, customerID) REFERENCES renting (startDate, endDate, customerID),
+    FOREIGN KEY (startDate, endDate, customerID) REFERENCES renting (startDate, endDate, customerID) ON DELETE CASCADE ON UPDATE CASCADE,
     PRIMARY KEY (startDate, endDate, customerID)
 );
 
@@ -163,7 +163,7 @@ CREATE TABLE IF NOT EXISTS booking_archive(
     startDate date,
     endDate date,
     customerID int,
-    FOREIGN KEY (startDate, endDate, customerID) REFERENCES booking (startDate, endDate, customerID),
+    FOREIGN KEY (startDate, endDate, customerID) REFERENCES booking (startDate, endDate, customerID) ON DELETE CASCADE ON UPDATE CASCADE,
     PRIMARY KEY (startDate, endDate, customerID)
 );
 
@@ -191,9 +191,9 @@ INSERT INTO hotel VALUES ('Delta Hotels','Marriott', 'Toronto', 'Ontario', 'Kenn
 INSERT INTO hotel VALUES ('Marriott on the Falls','Marriott', 'Niagara', 'Ontario', 'Fallsview Boulevard', 6755, 800,3.9, 'MarriottFalls@Marriott.com',4165852503);
 INSERT INTO hotel VALUES ('JW Marriott The Rosseau','Marriott', 'Muskoka', 'Ontario', 'Paignton House Road', 1050, 468,4.2, 'JWMuskoka@Marriott.com',4165852503);
 
-INSERT INTO hotel VALUES ('The Westin Ottawa', 'Westin', 'Toronto','Ontario', 'Colonel By Dr', 11,450, 4.5, 'info@westinottawa.com', 6135607000);
+INSERT INTO hotel VALUES ('The Westin Ottawa', 'Westin', 'Ottawa','Ontario', 'Colonel By Dr', 11,450, 4.5, 'info@westinottawa.com', 6135607000);
 INSERT INTO hotel VALUES ('The Westin Harbour Castle', 'Westin', 'Toronto', 'Ontario', 'Harbour Square', 1,977, 4.4, 'harbourcastle@westin.com', 4168691600);
-INSERT INTO hotel VALUES ('The Westin Peachtree Plaza', 'Westin', 'Atlanta','Georgia', 'Peachtree St NW', 210,1073, 4.3, 'westinpeachtree@westin.com', 4046591400]);
+INSERT INTO hotel VALUES ('The Westin Peachtree Plaza', 'Westin', 'Atlanta','Georgia', 'Peachtree St NW', 210,1073, 4.3, 'westinpeachtree@westin.com', 4046591400);
 INSERT INTO hotel VALUES ('The Westin St. Francis San Francisco', 'Westin', 'San Francisco','California', 'Powell St', 355,1195, 4.4, 'stfrancis@westin.com', 4153977000);
 INSERT INTO hotel VALUES ('The Westin Harbour Island', 'Westin', 'Tampa','Florida', 'Harbour Island Blvd', 725,299, 4.4, 'westintampa@westin.com', 8132295000);
 INSERT INTO hotel VALUES ('The Westin Copley Place', 'Westin', 'Boston','Massachusetts', 'Huntington Ave', 10,803, 4.5, 'copleyplace@westin.com', 6172629600);
