@@ -27,7 +27,7 @@ public class RentingArchive {
         this.endDate = endDate;
     }
 
-    public int getCustomerId() {
+    public int getCustomerID() {
         return customerId;
     }
 

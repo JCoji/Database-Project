@@ -5,6 +5,7 @@ public class Hotel {
     private String name;
     private String chainName;
     private String province;
+    private String city;
     private String streetName;
     private int streetNum;
     private int numOfRooms;
@@ -12,10 +13,11 @@ public class Hotel {
     private String email;
     private int phoneNum;
 
-    public Hotel(String name, String chainName, String province, String streetName, int streetNum, int numOfRooms, int rating, String email, int phoneNum) {
+    public Hotel(String name, String chainName, String province, String city, String streetName, int streetNum, int numOfRooms, int rating, String email, int phoneNum) {
         this.name = name;
         this.chainName = chainName;
         this.province = province;
+        this.city = city;
         this.streetName = streetName;
         this.streetNum = streetNum;
         this.numOfRooms = numOfRooms;
@@ -58,6 +60,10 @@ public class Hotel {
     public void setProvince(String province) {
         this.province = province;
     }
+
+    public void setCity(String city) {this.city = city;}
+
+    public String getCity() {return this.city;}
 
     public String getStreetName() {
         return streetName;
@@ -113,6 +119,7 @@ public class Hotel {
                 "name='" + name + '\'' +
                 ", chainName='" + chainName + '\'' +
                 ", province='" + province + '\'' +
+                ", city='" + city + '\'' +
                 ", streetName='" + streetName + '\'' +
                 ", streetNum=" + streetNum +
                 ", numOfRooms=" + numOfRooms +

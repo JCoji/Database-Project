@@ -8,18 +8,17 @@ import java.util.List;
 
 import static java.sql.JDBCType.VARCHAR;
 
-public class BookingService {
-
-    public List<Booking> getBookings() throws Exception {
+public class RentingArchiveService {
+    public List<RentingArchive> getRentingArchives() throws Exception {
 
         // sql query
-        String sql = "SELECT * FROM booking";
+        String sql = "SELECT * FROM renting_archive";
 
         // database connection object
         ConnectionDB db = new ConnectionDB();
 
         //List to store and return all bookings from database
-        List<Booking> bookings = new ArrayList<>();
+        List<RentingArchive> rArchives = new ArrayList<>();
 
         //Try to connect to DB, catch any exceptions
         try {
@@ -32,21 +31,17 @@ public class BookingService {
             // execute query
             ResultSet rs = stmt.executeQuery();
 
-            // store bookings in list
+            // store archives in list
             while (rs.next()) {
-                // create new booking
-                Booking b = new Booking(
-                    new Date(rs.getDate("startDate").toString()),
-                    new Date(rs.getDate("endDate").toString()),
-                    rs.getInt("customerID"),
-                    rs.getDouble("roomPrice"),
-                    rs.getInt("roomNum"),
-                    rs.getString("hotelName"),
-                    rs.getInt("hotelNum")
+                // create new archive
+                RentingArchive r = new RentingArchive(
+                        new Date(rs.getDate("startDate").toString()),
+                        new Date(rs.getDate("endDate").toString()),
+                        rs.getInt("customerID")
                 );
 
-                // adds new booking to the list
-                bookings.add(b);
+                // adds new archive to the list
+                rArchives.add(r);
             }
 
             // close the result set
@@ -57,8 +52,8 @@ public class BookingService {
             con.close();
             db.close();
 
-            // return the list of bookings
-            return bookings;
+            // return the list of archives
+            return rArchives;
 
         } catch (Exception e) {
 
@@ -68,13 +63,13 @@ public class BookingService {
         }
     }
 
-    public String deleteBooking(Date sd, Date ed, Integer id) throws Exception {
+    public String deleteRentingArchive(Date sd, Date ed, Integer id) throws Exception {
 
         Connection con = null;
         String msg = "";
 
         // sql query
-        String sql = "DELETE FROM booking WHERE startDate = ? AND endDate = ? AND customerID = ?;";
+        String sql = "DELETE FROM renting_archive WHERE startDate = ? AND endDate = ? AND customerID = ?;";
 
         // database connection object
         ConnectionDB db = new ConnectionDB();
@@ -112,7 +107,7 @@ public class BookingService {
 
     }
 
-    public String createBooking(Booking booking) throws Exception {
+    public String createRentingArchive(RentingArchive ra) throws Exception {
 
         String msg = "";
         Connection con = null;
@@ -121,7 +116,7 @@ public class BookingService {
         ConnectionDB db = new ConnectionDB();
 
         // sql query
-        String sql = "INSERT INTO booking (startDate, endDate, customerID, room_price, room_num, hotel_name, hotel_num) VALUES (?, ?, ?, ?, ?, ?, ?);";
+        String sql = "INSERT INTO renting_archive (startDate, endDate, customerID, room_price, room_num, hotel_name, hotel_num) VALUES (?, ?, ?, ?, ?, ?, ?);";
 
         // try connecting to DB, catch and trow any error
         try {
@@ -130,13 +125,9 @@ public class BookingService {
 
             // prepare statement
             PreparedStatement stmt = con.prepareStatement(sql);
-            stmt.setDate(1, java.sql.Date.valueOf(booking.getStartDate().toString()));
-            stmt.setDate(2, java.sql.Date.valueOf(booking.getEndDate().toString()));
-            stmt.setInt(3, booking.getCustomerID());
-            stmt.setDouble(4, booking.getRoomPrice());
-            stmt.setInt(5, booking.getRoomNum());
-            stmt.setObject(6, booking.getHotelName(), VARCHAR, 45);
-            stmt.setInt(7, booking.getHotelNum());
+            stmt.setDate(1, java.sql.Date.valueOf(ra.getStartDate().toString()));
+            stmt.setDate(2, java.sql.Date.valueOf(ra.getEndDate().toString()));
+            stmt.setInt(3, ra.getCustomerID());
 
             // execute statement
             stmt.executeUpdate();
@@ -152,12 +143,12 @@ public class BookingService {
 
         } catch (Exception e) {
 
-            throw new Exception("Error while adding booking: " + e.getMessage());
+            throw new Exception("Error while adding renting archive: " + e.getMessage());
 
         }
     }
 
-    public String updateBooking (Date sd, Date ed, Integer id, String attName, Object val) throws Exception {
+    public String updateRentingArchive (Date sd, Date ed, Integer id, String attName, Object val) throws Exception {
 
         String msg = "";
         Connection con = null;
@@ -166,7 +157,7 @@ public class BookingService {
         ConnectionDB db = new ConnectionDB();
 
         // sql query
-        String sql = "UPDATE booking SET ? = ? WHERE startDate = ? AND endDate = ? AND customerID = ?;";
+        String sql = "UPDATE renting_archive SET ? = ? WHERE startDate = ? AND endDate = ? AND customerID = ?;";
 
         // try to connect to DB, catch any errors
         try {

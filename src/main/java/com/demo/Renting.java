@@ -38,7 +38,7 @@ public class Renting {
         this.endDate = endDate;
     }
 
-    public int getCustomerId() {
+    public int getCustomerID() {
         return customerId;
     }
 

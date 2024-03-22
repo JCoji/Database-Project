@@ -1,5 +1,9 @@
 package com.demo;
 
+import com.demo.Booking;
+import com.demo.ConnectionDB;
+import com.demo.Date;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -8,22 +12,21 @@ import java.util.List;
 
 import static java.sql.JDBCType.VARCHAR;
 
-public class BookingService {
+public class HotelService {
 
-    public List<Booking> getBookings() throws Exception {
+    public List<Hotel> getHotels() throws Exception {
 
         // sql query
-        String sql = "SELECT * FROM booking";
+        String sql = "SELECT * FROM hotel";
 
         // database connection object
         ConnectionDB db = new ConnectionDB();
 
         //List to store and return all bookings from database
-        List<Booking> bookings = new ArrayList<>();
+        List<Hotel> hotels = new ArrayList<>();
 
         //Try to connect to DB, catch any exceptions
         try {
-
             Connection con = db.getConnection();
 
             //Prepares statement
@@ -32,21 +35,24 @@ public class BookingService {
             // execute query
             ResultSet rs = stmt.executeQuery();
 
-            // store bookings in list
+            // store hotels in list
             while (rs.next()) {
-                // create new booking
-                Booking b = new Booking(
-                    new Date(rs.getDate("startDate").toString()),
-                    new Date(rs.getDate("endDate").toString()),
-                    rs.getInt("customerID"),
-                    rs.getDouble("roomPrice"),
-                    rs.getInt("roomNum"),
-                    rs.getString("hotelName"),
-                    rs.getInt("hotelNum")
+                // create new hotel
+                Hotel h = new Hotel(
+                    rs.getString("name"),
+                    rs.getString("chain_name"),
+                    rs.getString("province"),
+                    rs.getString("city"),
+                    rs.getString("streetName"),
+                    rs.getInt("streetNum"),
+                    rs.getInt("number_of_rooms"),
+                    rs.getInt("rating"),
+                    rs.getString("email"),
+                    rs.getInt("phone_num")
                 );
 
-                // adds new booking to the list
-                bookings.add(b);
+                // adds new hotel to the list
+                hotels.add(h);
             }
 
             // close the result set
@@ -57,8 +63,8 @@ public class BookingService {
             con.close();
             db.close();
 
-            // return the list of bookings
-            return bookings;
+            // return the list of hotels
+            return hotels;
 
         } catch (Exception e) {
 
@@ -68,13 +74,13 @@ public class BookingService {
         }
     }
 
-    public String deleteBooking(Date sd, Date ed, Integer id) throws Exception {
+    public String deleteHotel(String name, Integer streetNum) throws Exception {
 
         Connection con = null;
         String msg = "";
 
         // sql query
-        String sql = "DELETE FROM booking WHERE startDate = ? AND endDate = ? AND customerID = ?;";
+        String sql = "DELETE FROM hotel WHERE name = ? AND streetNum = ?;";
 
         // database connection object
         ConnectionDB db = new ConnectionDB();
@@ -89,9 +95,8 @@ public class BookingService {
             PreparedStatement stmt = con.prepareStatement(sql);
 
             // set the ? of the statement
-            stmt.setDate(1, java.sql.Date.valueOf(sd.toString()));
-            stmt.setDate(2, java.sql.Date.valueOf(ed.toString()));
-            stmt.setInt(3, id);
+            stmt.setString(1, name);
+            stmt.setInt(2, streetNum);
 
             // execute query
             stmt.executeUpdate();
@@ -104,15 +109,14 @@ public class BookingService {
         } catch (Exception e) {
 
             // throw exception
-            throw new Exception("Error while deleting booking" + e.getMessage());
-
+            throw new Exception("Error while deleting hotel" + e.getMessage());
         }
 
         return msg;
 
     }
 
-    public String createBooking(Booking booking) throws Exception {
+    public String createHotel(Hotel hotel) throws Exception {
 
         String msg = "";
         Connection con = null;
@@ -121,7 +125,7 @@ public class BookingService {
         ConnectionDB db = new ConnectionDB();
 
         // sql query
-        String sql = "INSERT INTO booking (startDate, endDate, customerID, room_price, room_num, hotel_name, hotel_num) VALUES (?, ?, ?, ?, ?, ?, ?);";
+        String sql = "INSERT INTO hotel (name, chain_name, province, city, streetName, streetNum, number_of_rooms, rating, email, phone_num) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 
         // try connecting to DB, catch and trow any error
         try {
@@ -130,13 +134,16 @@ public class BookingService {
 
             // prepare statement
             PreparedStatement stmt = con.prepareStatement(sql);
-            stmt.setDate(1, java.sql.Date.valueOf(booking.getStartDate().toString()));
-            stmt.setDate(2, java.sql.Date.valueOf(booking.getEndDate().toString()));
-            stmt.setInt(3, booking.getCustomerID());
-            stmt.setDouble(4, booking.getRoomPrice());
-            stmt.setInt(5, booking.getRoomNum());
-            stmt.setObject(6, booking.getHotelName(), VARCHAR, 45);
-            stmt.setInt(7, booking.getHotelNum());
+            stmt.setString(1, hotel.getName());
+            stmt.setString(2, hotel.getChainName());
+            stmt.setString(3, hotel.getProvince());
+            stmt.setString(4, hotel.getCity());
+            stmt.setString(5, hotel.getStreetName());
+            stmt.setInt(6, hotel.getStreetNum());
+            stmt.setInt(7, hotel.getNumOfRooms());
+            stmt.setInt(8, hotel.getRating());
+            stmt.setString(9, hotel.getEmail());
+            stmt.setInt(10, hotel.getPhoneNum());
 
             // execute statement
             stmt.executeUpdate();
@@ -152,12 +159,12 @@ public class BookingService {
 
         } catch (Exception e) {
 
-            throw new Exception("Error while adding booking: " + e.getMessage());
+            throw new Exception("Error while adding hotel: " + e.getMessage());
 
         }
     }
 
-    public String updateBooking (Date sd, Date ed, Integer id, String attName, Object val) throws Exception {
+    public String updateHotel (String name, Integer streetNum, String attName, Object val) throws Exception {
 
         String msg = "";
         Connection con = null;
@@ -166,7 +173,7 @@ public class BookingService {
         ConnectionDB db = new ConnectionDB();
 
         // sql query
-        String sql = "UPDATE booking SET ? = ? WHERE startDate = ? AND endDate = ? AND customerID = ?;";
+        String sql = "UPDATE hotel SET " + attName + " = ? WHERE name = ? AND streetNum = ?;";
 
         // try to connect to DB, catch any errors
         try {
@@ -175,12 +182,9 @@ public class BookingService {
 
             // prepare statement
             PreparedStatement stmt = con.prepareStatement(sql);
-            stmt.setString(1, attName);
-            stmt.setObject(2, val);
-            stmt.setDate(3, java.sql.Date.valueOf(sd.toString()));
-            stmt.setDate(4, java.sql.Date.valueOf(ed.toString()));
-            stmt.setInt(5, id);
-
+            stmt.setObject(1, val);
+            stmt.setString(2, name);
+            stmt.setInt(3, streetNum);
 
             // execute statement
             stmt.executeUpdate();
@@ -196,7 +200,7 @@ public class BookingService {
 
         } catch (Exception e) {
 
-            throw new Exception("Error while updating: " + e.getMessage());
+            throw new Exception("Error while updating hotel: " + e.getMessage());
 
         }
 

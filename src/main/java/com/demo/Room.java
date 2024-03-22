@@ -4,14 +4,14 @@ public class Room {
 
     private int roomNum;
     private String hotelName;
-    private String hotelNum;
+    private int hotelNum;
     private int capacity;
     private int price;
     private String amenities;
     private boolean expandable;
     private String problems = "";
 
-    public Room(int roomNum, String hotelName, String hotelNum, int capacity, int price, String amenities, boolean expandable, String problems) {
+    public Room(int roomNum, String hotelName, int hotelNum, int capacity, int price, String amenities, boolean expandable, String problems) {
         this.roomNum = roomNum;
         this.hotelName = hotelName;
         this.hotelNum = hotelNum;
@@ -38,11 +38,11 @@ public class Room {
         this.hotelName = hotelName;
     }
 
-    public String getHotelNum() {
+    public int getHotelNum() {
         return hotelNum;
     }
 
-    public void setHotelNum(String hotelNum) {
+    public void setHotelNum(int hotelNum) {
         this.hotelNum = hotelNum;
     }
 

@@ -28,7 +28,7 @@ public class BookingArchive {
         this.endDate = endDate;
     }
 
-    public int getCustomerId() {
+    public int getCustomerID() {
         return customerId;
     }
 
