@@ -87,4 +87,5 @@ public class Booking {
                 ", hotelNum=" + hotelNum +
                 '}';
     }
+
 }

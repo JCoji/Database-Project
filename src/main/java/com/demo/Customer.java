@@ -101,4 +101,5 @@ public class Customer {
                 ", regDate=" + regDate.toString() +
                 '}';
     }
+
 }

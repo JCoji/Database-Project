@@ -65,4 +65,5 @@ public class HotelChain {
                 ", numberOfHotels=" + numberOfHotels +
                 '}';
     }
+
 }

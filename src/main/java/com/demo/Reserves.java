@@ -65,4 +65,5 @@ public class Reserves {
                 ", hotelNum=" + hotelNum +
                 '}';
     }
+
 }

@@ -43,4 +43,5 @@ public class RentingArchive {
                 ", customerId=" + customerId +
                 '}';
     }
+
 }

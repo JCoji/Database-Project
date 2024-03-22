@@ -44,4 +44,5 @@ public class BookingArchive {
                 ", customerId=" + customerId +
                 '}';
     }
+
 }
