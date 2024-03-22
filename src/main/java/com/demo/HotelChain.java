@@ -1,13 +1,13 @@
 package com.demo;
 
-public class hotelChain {
+public class HotelChain {
 
     private String name;
     private String city;
     private String province;
     private String streetName;
     private int numberOfHotels;
-    public hotelChain(String name, String city, String province, String streetName, int numberOfHotels){
+    public HotelChain(String name, String city, String province, String streetName, int numberOfHotels){
         this.name = name;
         this.city = city;
         this.province = province;

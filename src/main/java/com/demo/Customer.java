@@ -1,6 +1,6 @@
 package com.demo;
 
-public class customer {
+public class Customer {
     private int id;
     private String fName;
     private String sName;
@@ -8,9 +8,9 @@ public class customer {
     private String province;
     private String streetName;
     private int streetNum;
-    private date regDate;
+    private Date regDate;
 
-    public customer(int id, String fName, String sName, String city, String province, String streetName, int streetNum, date regDate) {
+    public Customer(int id, String fName, String sName, String city, String province, String streetName, int streetNum, Date regDate) {
         this.id = id;
         this.fName = fName;
         this.sName = sName;
@@ -80,11 +80,11 @@ public class customer {
         this.streetNum = streetNum;
     }
 
-    public date getRegDate() {
+    public Date getRegDate() {
         return regDate;
     }
 
-    public void setRegDate(date regDate) {
+    public void setRegDate(Date regDate) {
         this.regDate = regDate;
     }
 

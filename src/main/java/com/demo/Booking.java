@@ -1,15 +1,15 @@
 package com.demo;
 
-public class booking {
+public class Booking {
 
-    private date startDate;
-    private date endDate;
+    private Date startDate;
+    private Date endDate;
     private int customerID;
     private double roomPrice;
     private int roomNum;
     private String hotelName;
     private int hotelNum;
-    public booking(date startDate, date endDate, int customerID, double roomPrice, int roomNum, String hotelName, int hotelNum){
+    public Booking(Date startDate, Date endDate, int customerID, double roomPrice, int roomNum, String hotelName, int hotelNum){
         this.startDate = startDate;
         this.endDate = endDate;
         this.customerID = customerID;
@@ -35,7 +35,7 @@ public class booking {
         return roomNum;
     }
 
-    public date getEndDate() {
+    public Date getEndDate() {
         return endDate;
     }
 
@@ -43,7 +43,7 @@ public class booking {
         return hotelName;
     }
 
-    public date getStartDate() {
+    public Date getStartDate() {
         return startDate;
     }
 
@@ -51,11 +51,11 @@ public class booking {
         this.customerID = customerID;
     }
 
-    public void setEndDate(date endDate) {
+    public void setEndDate(Date endDate) {
         this.endDate = endDate;
     }
 
-    public void setStartDate(date startDate) {
+    public void setStartDate(Date startDate) {
         this.startDate = startDate;
     }
 

@@ -1,6 +1,6 @@
 package com.demo;
 
-public class hotel {
+public class Hotel {
 
     private String name;
     private String chainName;
@@ -12,7 +12,7 @@ public class hotel {
     private String email;
     private int phoneNum;
 
-    public hotel(String name, String chainName, String province, String streetName, int streetNum, int numOfRooms, int rating, String email, int phoneNum) {
+    public Hotel(String name, String chainName, String province, String streetName, int streetNum, int numOfRooms, int rating, String email, int phoneNum) {
         this.name = name;
         this.chainName = chainName;
         this.province = province;
@@ -24,7 +24,7 @@ public class hotel {
         this.phoneNum = phoneNum;
     }
 
-    public hotel(String name, String chainName, String province, String streetName, int streetNum, int numOfRooms, String email, int phoneNum) {
+    public Hotel(String name, String chainName, String province, String streetName, int streetNum, int numOfRooms, String email, int phoneNum) {
         this.name = name;
         this.chainName = chainName;
         this.province = province;

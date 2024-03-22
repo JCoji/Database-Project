@@ -1,29 +1,31 @@
 package com.demo;
 
-public class renting_archive {
-    private date startDate;
-    private date endDate;
+public class ChecksIn {
+    private Date startDate;
+    private Date endDate;
     private int customerId;
+    private int employeeId;
 
-    public renting_archive(date startDate, date endDate, int customerId) {
+    public ChecksIn(Date startDate, Date endDate, int customerId, int employeeId) {
         this.startDate = startDate;
         this.endDate = endDate;
         this.customerId = customerId;
+        this.employeeId = employeeId;
     }
 
-    public date getStartDate() {
+    public Date getStartDate() {
         return startDate;
     }
 
-    public void setStartDate(date startDate) {
+    public void setStartDate(Date startDate) {
         this.startDate = startDate;
     }
 
-    public date getEndDate() {
+    public Date getEndDate() {
         return endDate;
     }
 
-    public void setEndDate(date endDate) {
+    public void setEndDate(Date endDate) {
         this.endDate = endDate;
     }
 
@@ -35,12 +37,21 @@ public class renting_archive {
         this.customerId = customerId;
     }
 
+    public int getEmployeeId() {
+        return employeeId;
+    }
+
+    public void setEmployeeId(int employeeId) {
+        this.employeeId = employeeId;
+    }
+
     @Override
     public String toString() {
-        return "renting_archive{" +
+        return "checks_in{" +
                 "startDate=" + startDate +
                 ", endDate=" + endDate +
                 ", customerId=" + customerId +
+                ", employeeId=" + employeeId +
                 '}';
     }
 }

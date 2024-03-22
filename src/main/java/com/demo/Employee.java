@@ -2,7 +2,7 @@ package com.demo;
 
 
 
-public class employee {
+public class Employee {
     private int id;
     private String fName;
     private String sName;
@@ -14,7 +14,7 @@ public class employee {
     private String hotelName;
     private int hotelNum;
 
-    public employee(int id, String fName, String sName, String city, String province, String streetName, int streetNum, String position, String hotelName, int hotelNum) {
+    public Employee(int id, String fName, String sName, String city, String province, String streetName, int streetNum, String position, String hotelName, int hotelNum) {
         this.id = id;
         this.fName = fName;
         this.sName = sName;

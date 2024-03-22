@@ -1,6 +1,6 @@
 package com.demo;
 
-public class room {
+public class Room {
 
     private int roomNum;
     private String hotelName;
@@ -11,7 +11,7 @@ public class room {
     private boolean expandable;
     private String problems = "";
 
-    public room(int roomNum, String hotelName, String hotelNum, int capacity, int price, String amenities, boolean expandable, String problems) {
+    public Room(int roomNum, String hotelName, String hotelNum, int capacity, int price, String amenities, boolean expandable, String problems) {
         this.roomNum = roomNum;
         this.hotelName = hotelName;
         this.hotelNum = hotelNum;

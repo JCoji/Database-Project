@@ -1,18 +1,18 @@
 package com.demo;
 
-public class date {
+public class Date {
 
     private int year;
     private int month;
     private int day;
 
-    public date(int year, int month, int day) {
+    public Date(int year, int month, int day) {
         this.year = year;
         this.month = month;
         this.day = day;
     }
 
-    public date(String totalDate) {
+    public Date(String totalDate) {
         String[] dates = totalDate.split("-");
         year = Integer.parseInt(dates[0]);
         month = Integer.parseInt(dates[1]);
