@@ -48,7 +48,7 @@ public class HotelService {
                     rs.getInt("number_of_rooms"),
                     rs.getInt("rating"),
                     rs.getString("email"),
-                    rs.getInt("phone_num")
+                    rs.getString("phone_num")
                 );
 
                 // adds new hotel to the list
@@ -125,7 +125,7 @@ public class HotelService {
         ConnectionDB db = new ConnectionDB();
 
         // sql query
-        String sql = "INSERT INTO hotel (name, chain_name, province, city, streetName, streetNum, number_of_rooms, rating, email, phone_num) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+        String sql = "INSERT INTO hotel (name, chain_name, province, city, streetName, streetNum, number_of_rooms, rating, email, phone_num) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 
         // try connecting to DB, catch and trow any error
         try {
@@ -143,7 +143,7 @@ public class HotelService {
             stmt.setInt(7, hotel.getNumOfRooms());
             stmt.setInt(8, hotel.getRating());
             stmt.setString(9, hotel.getEmail());
-            stmt.setInt(10, hotel.getPhoneNum());
+            stmt.setString(10, hotel.getPhoneNum());
 
             // execute statement
             stmt.executeUpdate();

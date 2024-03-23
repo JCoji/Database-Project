@@ -11,9 +11,9 @@ public class Hotel {
     private int numOfRooms;
     private int rating;
     private String email;
-    private int phoneNum;
+    private String phoneNum;
 
-    public Hotel(String name, String chainName, String province, String city, String streetName, int streetNum, int numOfRooms, int rating, String email, int phoneNum) {
+    public Hotel(String name, String chainName, String province, String city, String streetName, int streetNum, int numOfRooms, int rating, String email, String phoneNum) {
         this.name = name;
         this.chainName = chainName;
         this.province = province;
@@ -26,7 +26,7 @@ public class Hotel {
         this.phoneNum = phoneNum;
     }
 
-    public Hotel(String name, String chainName, String province, String streetName, int streetNum, int numOfRooms, String email, int phoneNum) {
+    public Hotel(String name, String chainName, String province, String streetName, int streetNum, int numOfRooms, String email, String phoneNum) {
         this.name = name;
         this.chainName = chainName;
         this.province = province;
@@ -105,11 +105,11 @@ public class Hotel {
         this.email = email;
     }
 
-    public int getPhoneNum() {
+    public String getPhoneNum() {
         return phoneNum;
     }
 
-    public void setPhoneNum(int phoneNum) {
+    public void setPhoneNum(String phoneNum) {
         this.phoneNum = phoneNum;
     }
 

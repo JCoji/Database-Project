@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS hotel (
   number_of_rooms int NOT NULL CHECK (number_of_rooms >= 0),
   rating int NOT NULL CHECK (rating >= 0 AND rating <= 100),
   email varchar(100) NOT NULL CHECK (email LIKE '_%@_%._%'),
-  phone_num CHAR(10) NOT NULL CHECK (phone_num not like '%[^0-9]%'),
+  phone_num varchar(15) NOT NULL CHECK (phone_num not like '%[^0-9]%'),
   PRIMARY KEY (name, streetNum),
   FOREIGN KEY (chain_name) REFERENCES hotelChain(name) ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -46,6 +46,8 @@ CREATE TABLE IF NOT EXISTS room (
     FOREIGN KEY (hotel_name, hotel_num) REFERENCES hotel (name, streetNum) ON DELETE CASCADE ON UPDATE CASCADE,
     PRIMARY KEY (room_num, hotel_name, hotel_num)
 );
+
+CREATE INDEX rooms_id_index ON room (room_num, hotelNum);
 
 -- ----------------------------
 -- Table structure for Customer
@@ -88,6 +90,7 @@ CREATE TABLE IF NOT EXISTS renting (
     startDate date NOT NULL,
     endDate date NOT NULL,
     customerID int,
+    employeeID int,
     status_of_payment boolean NOT NULL,
     room_num int,
     room_price int NOT NULL CHECK (room_price >= 0),
@@ -97,20 +100,8 @@ CREATE TABLE IF NOT EXISTS renting (
     FOREIGN KEY (customerID) REFERENCES customer (id) ON DELETE CASCADE ON UPDATE CASCADE,
     PRIMARY KEY (startDate, endDate, customerID)
 );
+CREATE INDEX renting_date_index ON renting (startDate, endDate, customerID);
 
--- ----------------------------
--- Table structure for Reserves
--- ----------------------------
-DROP TABLE IF EXISTS reserves;
-CREATE TABLE IF NOT EXISTS reserves (
-    startDate date NOT NULL,
-    endDate date NOT NULL,
-    room_num int,
-    hotel_name varchar(45),
-    hotel_num int,
-    FOREIGN KEY (room_num, hotel_name, hotel_num) REFERENCES room (room_num, hotel_name, hotel_num) ON DELETE CASCADE ON UPDATE CASCADE,
-    PRIMARY KEY (startDate, endDate, room_num, hotel_name, hotel_num)
-);
 
 -- ----------------------------
 -- Table structure for booking
@@ -124,24 +115,13 @@ CREATE TABLE IF NOT EXISTS booking (
     room_num int,
     hotel_name varchar(45),
     hotel_num int,
-    FOREIGN KEY (startDate, endDate, room_num, hotel_name, hotel_num) REFERENCES reserves (startDate, endDate, room_num, hotel_name, hotel_num) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (room_num, hotel_name, hotel_num) REFERENCES room (room_num, hotel_name, hotel_num) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (customerID) REFERENCES customer (id) ON DELETE CASCADE ON UPDATE CASCADE,
     PRIMARY KEY (startDate, endDate, customerID)
 );
 
--- ----------------------------
--- Table structure for checks-in
--- ----------------------------
-DROP TABLE IF EXISTS checks_in;
-CREATE TABLE IF NOT EXISTS checks_in(
-    renting_startDate date,
-    renting_endDate date,
-    customerID int,
-    employeeID int,
-    FOREIGN KEY (employeeID) REFERENCES employee (id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (renting_startDate, renting_endDate, customerID) REFERENCES renting (startDate, endDate, customerID) ON DELETE CASCADE ON UPDATE CASCADE,
-    PRIMARY KEY (renting_startDate, renting_endDate, customerID)
-);
+CREATE INDEX booking_date_index ON booking (startDate, endDate, customerID);
+
 
 -- ----------------------------
 -- Table structure for renting archive
@@ -151,7 +131,7 @@ CREATE TABLE IF NOT EXISTS renting_archive(
     startDate date,
     endDate date,
     customerID int,
-    FOREIGN KEY (startDate, endDate, customerID) REFERENCES renting (startDate, endDate, customerID) ON DELETE CASCADE ON UPDATE CASCADE,
+    employeeID int,
     PRIMARY KEY (startDate, endDate, customerID)
 );
 
@@ -163,9 +143,90 @@ CREATE TABLE IF NOT EXISTS booking_archive(
     startDate date,
     endDate date,
     customerID int,
-    FOREIGN KEY (startDate, endDate, customerID) REFERENCES booking (startDate, endDate, customerID) ON DELETE CASCADE ON UPDATE CASCADE,
     PRIMARY KEY (startDate, endDate, customerID)
 );
+
+
+-- ----------------------------
+-- Triggers To update the number of hotels owned by a chain when new hotel added
+-- ----------------------------
+CREATE OR REPLACE FUNCTION update_number_of_hotels()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Increment the number_of_hotels for the corresponding hotel chain
+    UPDATE hotelChain
+    SET number_of_hotels = number_of_hotels + 1
+    WHERE name = NEW.chain_name;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER after_hotel_insert
+AFTER INSERT ON hotel
+FOR EACH ROW
+EXECUTE FUNCTION update_number_of_hotels();
+
+
+-- ----------------------------
+-- Triggers To update the number of hotels owned by a chain when hotel deleted
+-- ----------------------------
+CREATE OR REPLACE FUNCTION decrement_number_of_hotels()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- decrement the number_of_hotels for the corresponding hotel chain
+    UPDATE hotelChain
+    SET number_of_hotels = number_of_hotels - 1
+    WHERE name = OLD.chain_name;
+
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER after_hotel_delete
+AFTER DELETE ON hotel
+FOR EACH ROW
+EXECUTE FUNCTION decrement_number_of_hotels();
+
+
+-- ----------------------------
+-- Triggers To archive/update booking
+-- ----------------------------
+CREATE OR REPLACE FUNCTION archive_deleted_booking()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO booking_archive (startDate, endDate, customerID)
+        VALUES (OLD.startDate, OLD.endDate, OLD.customerID);
+    INSERT INTO renting(startDate, endDate, customerID, employeeID, status_of_payment, room_num, room_price, hotel_name, hotel_num)
+        VALUES (OLD.startDate, OLD.endDate, OLD.customerID, NULL, FALSE, OLD.room_num, OLD.room_price, OLD.hotel_name, OLD.hotel_num);
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER after_delete_booking
+AFTER DELETE ON booking
+FOR EACH ROW
+EXECUTE FUNCTION archive_deleted_booking();
+
+
+-- ----------------------------
+-- Triggers To archive Renting
+-- ----------------------------
+CREATE OR REPLACE FUNCTION archive_deleted_renting()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO renting_archive (startDate, endDate, customerID, employeeID)
+        VALUES (OLD.startDate, OLD.endDate, OLD.customerID, OLD.employeeID);
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER after_delete_renting
+AFTER DELETE ON renting
+FOR EACH ROW
+EXECUTE FUNCTION archive_deleted_renting();
+
+
 
 
 
@@ -182,50 +243,50 @@ INSERT INTO hotelChain VALUES ('Hilton', 'Mclean', 'Virginia', 'Jones Branch Dri
 -- ----------------------------
 -- Records of Hotels
 -- ----------------------------
-INSERT INTO hotel VALUES ('The Ritz-Carlton','Marriott', 'Toronto', 'Ontario', 'Wellington St W', 2606, 468,4.7, 'RitzCarltonTO@Marriott.com',4165852503);
-INSERT INTO hotel VALUES ('Fairfield Inn','Marriott', 'Orillia', 'Ontario', 'Mulcachy Court', 8, 202,4.9, 'FairFieldOR@Marriott.com',2494490368);
-INSERT INTO hotel VALUES ('The Dorian','Marriott', 'Calgary', 'Alberta', '5TH AVENUE SW,', 525, 480,4.6, 'DorianCal@Marriott.com',4033006630);
-INSERT INTO hotel VALUES ('Residence Inn','Marriott', 'Calgary', 'Alberta', '10th Avenue SW Calgary', 610, 200,4.7, 'ResInnCal@Marriott.com',5878852288);
-INSERT INTO hotel VALUES ('Courtyard','Marriott', 'Montreal', 'Quebec', 'Decarie Boulevard Montreal', 6787, 101,3.5, 'CourtyardMO@Marriott.com',416585333);
-INSERT INTO hotel VALUES ('Delta Hotels','Marriott', 'Toronto', 'Ontario', 'Kennedy Road', 2035, 106 ,1.1, 'Delta@Marriott.com',4162991500);
-INSERT INTO hotel VALUES ('Marriott on the Falls','Marriott', 'Niagara', 'Ontario', 'Fallsview Boulevard', 6755, 800,3.9, 'MarriottFalls@Marriott.com',4165852503);
-INSERT INTO hotel VALUES ('JW Marriott The Rosseau','Marriott', 'Muskoka', 'Ontario', 'Paignton House Road', 1050, 468,4.2, 'JWMuskoka@Marriott.com',4165852503);
+INSERT INTO hotel VALUES ('The Ritz-Carlton','Marriott', 'Toronto', 'Ontario', 'Wellington St W', 2606, 468,4.7, 'RitzCarltonTO@Marriott.com','4165852503');
+INSERT INTO hotel VALUES ('Fairfield Inn','Marriott', 'Orillia', 'Ontario', 'Mulcachy Court', 8, 202,4.9, 'FairFieldOR@Marriott.com','2494490368');
+INSERT INTO hotel VALUES ('The Dorian','Marriott', 'Calgary', 'Alberta', '5TH AVENUE SW,', 525, 480,4.6, 'DorianCal@Marriott.com','4033006630');
+INSERT INTO hotel VALUES ('Residence Inn','Marriott', 'Calgary', 'Alberta', '10th Avenue SW Calgary', 610, 200,4.7, 'ResInnCal@Marriott.com','5878852288');
+INSERT INTO hotel VALUES ('Courtyard','Marriott', 'Montreal', 'Quebec', 'Decarie Boulevard Montreal', 6787, 101,3.5, 'CourtyardMO@Marriott.com','416585333');
+INSERT INTO hotel VALUES ('Delta Hotels','Marriott', 'Toronto', 'Ontario', 'Kennedy Road', 2035, 106 ,1.1, 'Delta@Marriott.com','4162991500');
+INSERT INTO hotel VALUES ('Marriott on the Falls','Marriott', 'Niagara', 'Ontario', 'Fallsview Boulevard', 6755, 800,3.9, 'MarriottFalls@Marriott.com','4165852503');
+INSERT INTO hotel VALUES ('JW Marriott The Rosseau','Marriott', 'Muskoka', 'Ontario', 'Paignton House Road', 1050, 468,4.2, 'JWMuskoka@Marriott.com','4165852503');
 
-INSERT INTO hotel VALUES ('The Westin Ottawa', 'Westin', 'Ottawa','Ontario', 'Colonel By Dr', 11,450, 4.5, 'info@westinottawa.com', 6135607000);
-INSERT INTO hotel VALUES ('The Westin Harbour Castle', 'Westin', 'Toronto', 'Ontario', 'Harbour Square', 1,977, 4.4, 'harbourcastle@westin.com', 4168691600);
-INSERT INTO hotel VALUES ('The Westin Peachtree Plaza', 'Westin', 'Atlanta','Georgia', 'Peachtree St NW', 210,1073, 4.3, 'westinpeachtree@westin.com', 4046591400);
-INSERT INTO hotel VALUES ('The Westin St. Francis San Francisco', 'Westin', 'San Francisco','California', 'Powell St', 355,1195, 4.4, 'stfrancis@westin.com', 4153977000);
-INSERT INTO hotel VALUES ('The Westin Harbour Island', 'Westin', 'Tampa','Florida', 'Harbour Island Blvd', 725,299, 4.4, 'westintampa@westin.com', 8132295000);
-INSERT INTO hotel VALUES ('The Westin Copley Place', 'Westin', 'Boston','Massachusetts', 'Huntington Ave', 10,803, 4.5, 'copleyplace@westin.com', 6172629600);
-INSERT INTO hotel VALUES ('The Westin Riverwalk', 'Westin', 'San Antonio','Texas', 'W Market St', 420,473, 4.6, 'riverwalk@westin.com', 2102246500);
-INSERT INTO hotel VALUES ('The Westin Grand', 'Westin', 'Vancouver','British Columbia', 'Robson St', 433,207, 4.4, 'westingrandvancouver@westin.com', 6046021999);
+INSERT INTO hotel VALUES ('The Westin Ottawa', 'Westin', 'Ottawa','Ontario', 'Colonel By Dr', 11,450, 4.5, 'info@westinottawa.com', '6135607000');
+INSERT INTO hotel VALUES ('The Westin Harbour Castle', 'Westin', 'Toronto', 'Ontario', 'Harbour Square', 1,977, 4.4, 'harbourcastle@westin.com', '4168691600');
+INSERT INTO hotel VALUES ('The Westin Peachtree Plaza', 'Westin', 'Atlanta','Georgia', 'Peachtree St NW', 210,1073, 4.3, 'westinpeachtree@westin.com', '4046591400');
+INSERT INTO hotel VALUES ('The Westin St. Francis San Francisco', 'Westin', 'San Francisco','California', 'Powell St', 355,1195, 4.4, 'stfrancis@westin.com', '4153977000');
+INSERT INTO hotel VALUES ('The Westin Harbour Island', 'Westin', 'Tampa','Florida', 'Harbour Island Blvd', 725,299, 4.4, 'westintampa@westin.com', '8132295000');
+INSERT INTO hotel VALUES ('The Westin Copley Place', 'Westin', 'Boston','Massachusetts', 'Huntington Ave', 10,803, 4.5, 'copleyplace@westin.com', '6172629600');
+INSERT INTO hotel VALUES ('The Westin Riverwalk', 'Westin', 'San Antonio','Texas', 'W Market St', 420,473, 4.6, 'riverwalk@westin.com','2102246500');
+INSERT INTO hotel VALUES ('The Westin Grand', 'Westin', 'Vancouver','British Columbia', 'Robson St', 433,207, 4.4, 'westingrandvancouver@westin.com', '6046021999');
 
-INSERT INTO hotel VALUES ('Fairmont Château Laurier', 'Fairmont', 'Ottawa', 'Ontario', 'Rideau St', 1,429, 4.6, 'chateaulaurier@fairmont.com', 6132411414);
-INSERT INTO hotel VALUES ('Fairmont Royal York', 'Fairmont', 'Toronto', 'Ontario', 'Front St W', 100,1365, 4.4, 'ryh.reservations@fairmont.com', 4163682511);
-INSERT INTO hotel VALUES ('Fairmont Olympic Hotel', 'Fairmont', 'Seattle', 'Washington', 'University St', 411,450, 4.6, 'seattle@fairmont.com', 2066211700);
-INSERT INTO hotel VALUES ('Fairmont Banff Springs', 'Fairmont', 'Banff', 'Alberta', 'Spray Ave', 405,757, 4.5, 'bsl.reservations@fairmont.com', 4037622211);
-INSERT INTO hotel VALUES ('The Plaza', 'Fairmont', 'New York', 'New York', '5th Ave', 768,282, 4.6, 'plaza@fairmont.com', 2127593000);
-INSERT INTO hotel VALUES ('Fairmont Empress', 'Fairmont', 'Victoria', 'British Columbia', 'Government St', 721,464, 4.6, 'empress@fairmont.com', 2503848111);
-INSERT INTO hotel VALUES ('Fairmont San Francisco', 'Fairmont', 'San Francisco', 'California', 'Mason St', 950,606, 4.5, 'sanfrancisco@fairmont.com', 4157725000);
-INSERT INTO hotel VALUES ('Fairmont Le Château Frontenac', 'Fairmont', 'Quebec City', 'Quebec', 'Rue des Carrières', 1,611, 4.7, 'chateaufrontenac@fairmont.com', 4186923861);
+INSERT INTO hotel VALUES ('Fairmont Château Laurier', 'Fairmont', 'Ottawa', 'Ontario', 'Rideau St', 1,429, 4.6, 'chateaulaurier@fairmont.com', '6132411414');
+INSERT INTO hotel VALUES ('Fairmont Royal York', 'Fairmont', 'Toronto', 'Ontario', 'Front St W', 100,1365, 4.4, 'ryh.reservations@fairmont.com', '4163682511');
+INSERT INTO hotel VALUES ('Fairmont Olympic Hotel', 'Fairmont', 'Seattle', 'Washington', 'University St', 411,450, 4.6, 'seattle@fairmont.com', '2066211700');
+INSERT INTO hotel VALUES ('Fairmont Banff Springs', 'Fairmont', 'Banff', 'Alberta', 'Spray Ave', 405,757, 4.5, 'bsl.reservations@fairmont.com', '4037622211');
+INSERT INTO hotel VALUES ('The Plaza', 'Fairmont', 'New York', 'New York', '5th Ave', 768,282, 4.6, 'plaza@fairmont.com', '2127593000');
+INSERT INTO hotel VALUES ('Fairmont Empress', 'Fairmont', 'Victoria', 'British Columbia', 'Government St', 721,464, 4.6, 'empress@fairmont.com', '2503848111');
+INSERT INTO hotel VALUES ('Fairmont San Francisco', 'Fairmont', 'San Francisco', 'California', 'Mason St', 950,606, 4.5, 'sanfrancisco@fairmont.com', '4157725000');
+INSERT INTO hotel VALUES ('Fairmont Le Château Frontenac', 'Fairmont', 'Quebec City', 'Quebec', 'Rue des Carrières', 1,611, 4.7, 'chateaufrontenac@fairmont.com', '4186923861');
 
-INSERT INTO hotel VALUES ('Four Seasons Hotel Toronto', 'Four Seasons', 'Toronto', 'Ontario', 'Yorkville Ave', 60, 259, 4.8, 'info@fourseasons.com', 4169640411);
-INSERT INTO hotel VALUES ('Four Seasons Hotel New York', 'Four Seasons', 'New York', 'New York', 'Barclay St', 27, 189, 4.7, 'info@fourseasons.com', 6468801999);
-INSERT INTO hotel VALUES ('Four Seasons Hotel Seattle', 'Four Seasons', 'Seattle', 'Washington', '1st Ave', 99, 147, 4.6, 'info@fourseasons.com', 2067497000);
-INSERT INTO hotel VALUES ('Four Seasons Resort Whistler', 'Four Seasons', 'Whistler', 'British Columbia', 'Blackcomb Way', 4591, 273, 4.8, 'info@fourseasons.com', 6049353400);
-INSERT INTO hotel VALUES ('Four Seasons Resort Maui', 'Four Seasons', 'Maui', 'Hawaii', 'Wailea Alanui Dr', 3900, 383, 4.9, 'info@fourseasons.com', 8088748000);
-INSERT INTO hotel VALUES ('Four Seasons Hotel Boston', 'Four Seasons', 'Boston', 'Massachusetts', 'Boylston St', 200, 273, 4.7, 'info@fourseasons.com', 6173384400);
-INSERT INTO hotel VALUES ('Four Seasons Hotel at Beverly Hills', 'Four Seasons', 'Los Angeles', 'California', 'S Doheny Dr', 300, 285, 4.7, 'info@fourseasons.com', 3102732222);
-INSERT INTO hotel VALUES ('Four Seasons Hotel Chicago', 'Four Seasons', 'Chicago', 'Illinois', 'E Delaware Pl', 120, 345, 4.8, 'info@fourseasons.com', 3122808800);
+INSERT INTO hotel VALUES ('Four Seasons Hotel Toronto', 'Four Seasons', 'Toronto', 'Ontario', 'Yorkville Ave', 60, 259, 4.8, 'info@fourseasons.com', '4169640411');
+INSERT INTO hotel VALUES ('Four Seasons Hotel New York', 'Four Seasons', 'New York', 'New York', 'Barclay St', 27, 189, 4.7, 'info@fourseasons.com', '6468801999');
+INSERT INTO hotel VALUES ('Four Seasons Hotel Seattle', 'Four Seasons', 'Seattle', 'Washington', '1st Ave', 99, 147, 4.6, 'info@fourseasons.com', '2067497000');
+INSERT INTO hotel VALUES ('Four Seasons Resort Whistler', 'Four Seasons', 'Whistler', 'British Columbia', 'Blackcomb Way', 4591, 273, 4.8, 'info@fourseasons.com', '6049353400');
+INSERT INTO hotel VALUES ('Four Seasons Resort Maui', 'Four Seasons', 'Maui', 'Hawaii', 'Wailea Alanui Dr', 3900, 383, 4.9, 'info@fourseasons.com', '8088748000');
+INSERT INTO hotel VALUES ('Four Seasons Hotel Boston', 'Four Seasons', 'Boston', 'Massachusetts', 'Boylston St', 200, 273, 4.7, 'info@fourseasons.com', '6173384400');
+INSERT INTO hotel VALUES ('Four Seasons Hotel at Beverly Hills', 'Four Seasons', 'Los Angeles', 'California', 'S Doheny Dr', 300, 285, 4.7, 'info@fourseasons.com', '3102732222');
+INSERT INTO hotel VALUES ('Four Seasons Hotel Chicago', 'Four Seasons', 'Chicago', 'Illinois', 'E Delaware Pl', 120, 345, 4.8, 'info@fourseasons.com', '3122808800');
 
-INSERT INTO hotel VALUES ('Hilton Toronto', 'Hilton', 'Toronto', 'Ontario', 'Richmond St W', 145, 600, 4.4, 'info@hilton.com', 4168693456);
-INSERT INTO hotel VALUES ('Hilton New York Midtown', 'Hilton', 'New York', 'New York', 'Avenue of the Americas', 1335, 1969, 4.3, 'info@hilton.com', 2125867000);
-INSERT INTO hotel VALUES ('Hilton Seattle', 'Hilton', 'Seattle', 'Washington', '6th Ave', 1301, 239, 4.5, 'info@hilton.com', 2066240500);
-INSERT INTO hotel VALUES ('Hilton Whistler Resort', 'Hilton', 'Whistler', 'British Columbia', 'Whistler Way', 4050, 287, 4.6, 'info@hilton.com', 6049321982);
-INSERT INTO hotel VALUES ('Hilton Hawaiian Village', 'Hilton', 'Honolulu', 'Hawaii', 'Kalia Rd', 2005, 2860, 4.5, 'info@hilton.com', 8089494321);
-INSERT INTO hotel VALUES ('Hilton Boston Back Bay', 'Hilton', 'Boston', 'Massachusetts', 'Dalton St', 40, 390, 4.3, 'info@hilton.com', 6172361100);
-INSERT INTO hotel VALUES ('Hilton Los Angeles Airport', 'Hilton', 'Los Angeles', 'California', 'W Century Blvd', 5711, 1234, 4.1, 'info@hilton.com', 3104104000);
-INSERT INTO hotel VALUES ('Hilton Chicago', 'Hilton', 'Chicago', 'Illinois', 'S Michigan Ave', 720, 1544, 4.4, 'info@hilton.com', 3129224400);
+INSERT INTO hotel VALUES ('Hilton Toronto', 'Hilton', 'Toronto', 'Ontario', 'Richmond St W', 145, 600, 4.4, 'info@hilton.com', '4168693456');
+INSERT INTO hotel VALUES ('Hilton New York Midtown', 'Hilton', 'New York', 'New York', 'Avenue of the Americas', 1335, 1969, 4.3, 'info@hilton.com', '2125867000');
+INSERT INTO hotel VALUES ('Hilton Seattle', 'Hilton', 'Seattle', 'Washington', '6th Ave', 1301, 239, 4.5, 'info@hilton.com', '2066240500');
+INSERT INTO hotel VALUES ('Hilton Whistler Resort', 'Hilton', 'Whistler', 'British Columbia', 'Whistler Way', 4050, 287, 4.6, 'info@hilton.com', '6049321982');
+INSERT INTO hotel VALUES ('Hilton Hawaiian Village', 'Hilton', 'Honolulu', 'Hawaii', 'Kalia Rd', 2005, 2860, 4.5, 'info@hilton.com', '8089494321');
+INSERT INTO hotel VALUES ('Hilton Boston Back Bay', 'Hilton', 'Boston', 'Massachusetts', 'Dalton St', 40, 390, 4.3, 'info@hilton.com', '6172361100');
+INSERT INTO hotel VALUES ('Hilton Los Angeles Airport', 'Hilton', 'Los Angeles', 'California', 'W Century Blvd', 5711, 1234, 4.1, 'info@hilton.com', '3104104000');
+INSERT INTO hotel VALUES ('Hilton Chicago', 'Hilton', 'Chicago', 'Illinois', 'S Michigan Ave', 720, 1544, 4.4, 'info@hilton.com', '3129224400');
 
 
 

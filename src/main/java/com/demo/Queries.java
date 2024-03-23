@@ -1,12 +1,15 @@
 package com.demo;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 //Backend queries, answers for Question 2c
 public class Queries {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
+        /*
         query1();
         System.out.println();
         query2();
@@ -14,6 +17,32 @@ public class Queries {
         query3();
         System.out.println();
         query4();
+        */
+
+        HotelService hs = new HotelService();
+        List<Hotel> hotels = new ArrayList<>();
+
+        hs.createHotel(new Hotel("test", "Marriott", "Ontario", "Ottawa", "Rideau", 1, 1, 1, "Stinky@hotel.com", "1234567678990"));
+
+        //hs.deleteHotel("test", 1);
+        hs.updateHotel("test", 1, "streetName", "Byward");
+        try{
+            hotels = hs.getHotels();
+
+            while(!hotels.isEmpty()){
+                Hotel h = hotels.remove(0);
+                System.out.print(h.getName());
+                System.out.println(" "+ h.getStreetName());
+            }
+
+
+        }catch (Exception e) {
+
+            // throw the error
+            throw new Exception(e.getMessage());
+
+        }
+
     }
 
     public static void query1()
