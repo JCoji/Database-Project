@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS room (
     amenities varchar(100) NOT NULL,
     expandable boolean NOT NULL,
     problems varchar(100),
+    isAvailable boolean,
     FOREIGN KEY (hotel_name, hotel_num) REFERENCES hotel (name, streetNum) ON DELETE CASCADE ON UPDATE CASCADE,
     PRIMARY KEY (room_num, hotel_name, hotel_num)
 );
@@ -199,6 +200,9 @@ BEGIN
         VALUES (OLD.startDate, OLD.endDate, OLD.customerID);
     INSERT INTO renting(startDate, endDate, customerID, employeeID, status_of_payment, room_num, room_price, hotel_name, hotel_num)
         VALUES (OLD.startDate, OLD.endDate, OLD.customerID, NULL, FALSE, OLD.room_num, OLD.room_price, OLD.hotel_name, OLD.hotel_num);
+    UPDATE room
+        SET isAvailable = FALSE
+        WHERE  room_num = OLD.room_num AND hotel_name = OLD.hotel_name AND hotel_num = OLD.hotel_num;
     RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
@@ -210,6 +214,26 @@ EXECUTE FUNCTION archive_deleted_booking();
 
 
 -- ----------------------------
+-- Triggers To Make a new renting
+-- ----------------------------
+CREATE OR REPLACE FUNCTION new_renting()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE room
+        SET isAvailable = FALSE
+        WHERE  room_num = NEW.room_num AND hotel_name = NEW.hotel_name AND hotel_num = NEW.hotel_num;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER after_new_renting
+AFTER INSERT ON renting
+FOR EACH ROW
+EXECUTE FUNCTION new_renting();
+
+
+
+-- ----------------------------
 -- Triggers To archive Renting
 -- ----------------------------
 CREATE OR REPLACE FUNCTION archive_deleted_renting()
@@ -217,6 +241,9 @@ RETURNS TRIGGER AS $$
 BEGIN
     INSERT INTO renting_archive (startDate, endDate, customerID, employeeID)
         VALUES (OLD.startDate, OLD.endDate, OLD.customerID, OLD.employeeID);
+    UPDATE room
+        SET isAvailable = TRUE
+        WHERE  room_num = OLD.room_num AND hotel_name = OLD.hotel_name AND hotel_num = OLD.hotel_num;
     RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
@@ -227,8 +254,26 @@ FOR EACH ROW
 EXECUTE FUNCTION archive_deleted_renting();
 
 
+-- ----------------------------
+-- View for the number of number of rooms in a given area
+-- ----------------------------
+CREATE VIEW rooms_in_area AS
+SELECT h.city, h.province, COUNT(room_num)
+FROM hotel H JOIN room R
+ON H.name = R.hotel_name AND H.streetNum = R.hotel_num
+WHERE r.isAvailable = true
+GROUP BY
+    H.city,
+    H.province;
 
 
+-- ----------------------------
+-- View for the number of available rooms in a hotel
+-- ----------------------------
+CREATE VIEW rooms_in_hotel AS
+SELECT hotel_name, hotel_num, COUNT(room_num)
+FROM room
+WHERE isAvailable = true;
 
 -- ----------------------------
 -- Records of Hotel Chains
@@ -294,293 +339,293 @@ INSERT INTO hotel VALUES ('Hilton Chicago', 'Hilton', 'Chicago', 'Illinois', 'S 
 -- Records of Rooms
 -- ----------------------------
 -- Rooms for The Ritz-Carlton
-INSERT INTO room VALUES (101, 'The Ritz-Carlton', 2606, 2, 170, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'The Ritz-Carlton', 2606, 2, 180, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'The Ritz-Carlton', 2606, 3, 190, 'WiFi, Gym Access, Waterfront View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'The Ritz-Carlton', 2606, 2, 200, 'WiFi, Spa Access, Mountain View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'The Ritz-Carlton', 2606, 2, 210, 'WiFi, Pet Friendly, Park View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'The Ritz-Carlton', 2606, 2, 170, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'The Ritz-Carlton', 2606, 2, 180, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'The Ritz-Carlton', 2606, 3, 190, 'WiFi, Gym Access, Waterfront View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'The Ritz-Carlton', 2606, 2, 200, 'WiFi, Spa Access, Mountain View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'The Ritz-Carlton', 2606, 2, 210, 'WiFi, Pet Friendly, Park View', FALSE, NULL, TRUE);
 
 -- Rooms for Fairfield Inn
-INSERT INTO room VALUES (101, 'Fairfield Inn', 8, 2, 180, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Fairfield Inn', 8, 2, 190, 'WiFi, Breakfast Included, Mountain View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Fairfield Inn', 8, 3, 200, 'WiFi, Gym Access, Forest View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Fairfield Inn', 8, 2, 210, 'WiFi, Spa Access, Village View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Fairfield Inn', 8, 2, 220, 'WiFi, Pet Friendly, Lake View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Fairfield Inn', 8, 2, 180, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Fairfield Inn', 8, 2, 190, 'WiFi, Breakfast Included, Mountain View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Fairfield Inn', 8, 3, 200, 'WiFi, Gym Access, Forest View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Fairfield Inn', 8, 2, 210, 'WiFi, Spa Access, Village View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Fairfield Inn', 8, 2, 220, 'WiFi, Pet Friendly, Lake View', FALSE, NULL, TRUE);
 
 -- Rooms for The Dorian
-INSERT INTO room VALUES (101, 'The Dorian', 525, 2, 200, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'The Dorian', 525, 2, 210, 'WiFi, Breakfast Included, Ocean View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'The Dorian', 525, 3, 220, 'WiFi, Gym Access, Beach View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'The Dorian', 525, 2, 230, 'WiFi, Spa Access, Garden View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'The Dorian', 525, 2, 240, 'WiFi, Pet Friendly, Mountain View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'The Dorian', 525, 2, 200, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'The Dorian', 525, 2, 210, 'WiFi, Breakfast Included, Ocean View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'The Dorian', 525, 3, 220, 'WiFi, Gym Access, Beach View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'The Dorian', 525, 2, 230, 'WiFi, Spa Access, Garden View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'The Dorian', 525, 2, 240, 'WiFi, Pet Friendly, Mountain View', FALSE, NULL, TRUE);
 
 -- Rooms for Residence Inn
-INSERT INTO room VALUES (101, 'Residence Inn', 610, 2, 160, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Residence Inn', 610, 2, 170, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Residence Inn', 610, 3, 180, 'WiFi, Gym Access, River View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Residence Inn', 610, 2, 190, 'WiFi, Spa Access, Skyline View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Residence Inn', 610, 2, 200, 'WiFi, Pet Friendly, Park View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Residence Inn', 610, 2, 160, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Residence Inn', 610, 2, 170, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Residence Inn', 610, 3, 180, 'WiFi, Gym Access, River View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Residence Inn', 610, 2, 190, 'WiFi, Spa Access, Skyline View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Residence Inn', 610, 2, 200, 'WiFi, Pet Friendly, Park View', FALSE, NULL, TRUE);
 
 -- Rooms for Hilton Courtyard
-INSERT INTO room VALUES (101, 'Courtyard', 6787, 2, 140, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Courtyard', 6787, 2, 150, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Courtyard', 6787, 3, 160, 'WiFi, Gym Access, Runway View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Courtyard', 6787, 2, 170, 'WiFi, Spa Access, Ocean View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Courtyard', 6787, 2, 180, 'WiFi, Pet Friendly, Park View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Courtyard', 6787, 2, 140, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Courtyard', 6787, 2, 150, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Courtyard', 6787, 3, 160, 'WiFi, Gym Access, Runway View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Courtyard', 6787, 2, 170, 'WiFi, Spa Access, Ocean View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Courtyard', 6787, 2, 180, 'WiFi, Pet Friendly, Park View', FALSE, NULL, TRUE);
 
 -- Rooms for Delta Hotels
-INSERT INTO room VALUES (101, 'Delta Hotels', 2035, 2, 170, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Delta Hotels', 2035, 2, 180, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Delta Hotels', 2035, 3, 190, 'WiFi, Gym Access, Lake View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Delta Hotels', 2035, 2, 200, 'WiFi, Spa Access, Downtown View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Delta Hotels', 2035, 2, 210, 'WiFi, Pet Friendly, Park View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Delta Hotels', 2035, 2, 170, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Delta Hotels', 2035, 2, 180, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Delta Hotels', 2035, 3, 190, 'WiFi, Gym Access, Lake View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Delta Hotels', 2035, 2, 200, 'WiFi, Spa Access, Downtown View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Delta Hotels', 2035, 2, 210, 'WiFi, Pet Friendly, Park View', FALSE, NULL, TRUE);
 
 -- Rooms for Marriott on the Falls
-INSERT INTO room VALUES (106, 'Marriott on the Falls', 6755, 4, 350, 'WiFi, Spa Access, City View', TRUE, NULL);
-INSERT INTO room VALUES (107, 'Marriott on the Falls', 6755, 2, 280, 'WiFi, Breakfast Included, Ocean View', FALSE, NULL);
-INSERT INTO room VALUES (108, 'Marriott on the Falls', 6755, 3, 300, 'WiFi, Gym Access, Mountain View', TRUE, NULL);
-INSERT INTO room VALUES (109, 'Marriott on the Falls', 6755, 2, 250, 'WiFi, Mini Bar, River View', FALSE, NULL);
-INSERT INTO room VALUES (110, 'Marriott on the Falls', 6755, 2, 270, 'WiFi, Pet Friendly, Garden View', FALSE, NULL);
+INSERT INTO room VALUES (106, 'Marriott on the Falls', 6755, 4, 350, 'WiFi, Spa Access, City View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (107, 'Marriott on the Falls', 6755, 2, 280, 'WiFi, Breakfast Included, Ocean View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (108, 'Marriott on the Falls', 6755, 3, 300, 'WiFi, Gym Access, Mountain View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (109, 'Marriott on the Falls', 6755, 2, 250, 'WiFi, Mini Bar, River View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (110, 'Marriott on the Falls', 6755, 2, 270, 'WiFi, Pet Friendly, Garden View', FALSE, NULL, TRUE);
 
 -- Rooms for JW Marriott The Rossea
-INSERT INTO room VALUES (101, 'JW Marriott The Rosseau', 1050, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'JW Marriott The Rosseau', 1050, 2, 230, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'JW Marriott The Rosseau', 1050, 2, 240, 'WiFi, Gym Access, Mountain View', FALSE, NULL);
-INSERT INTO room VALUES (104, 'JW Marriott The Rosseau', 1050, 2, 250, 'WiFi, Spa Access, Ocean View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'JW Marriott The Rosseau', 1050, 4, 300, 'WiFi, Suite, Garden View', TRUE, NULL);
+INSERT INTO room VALUES (101, 'JW Marriott The Rosseau', 1050, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'JW Marriott The Rosseau', 1050, 2, 230, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'JW Marriott The Rosseau', 1050, 2, 240, 'WiFi, Gym Access, Mountain View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'JW Marriott The Rosseau', 1050, 2, 250, 'WiFi, Spa Access, Ocean View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'JW Marriott The Rosseau', 1050, 4, 300, 'WiFi, Suite, Garden View', TRUE, NULL, TRUE);
 
 
 
 -- Rooms for Fairmont Château Laurier
-INSERT INTO room VALUES (106, 'Fairmont Château Laurier', 1, 4, 300, 'WiFi, Spa Access, City View', TRUE, NULL);
-INSERT INTO room VALUES (107, 'Fairmont Château Laurier', 1, 2, 250, 'WiFi, Breakfast Included, Mountain View', FALSE, NULL);
-INSERT INTO room VALUES (108, 'Fairmont Château Laurier', 1, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (109, 'Fairmont Château Laurier', 1, 3, 280, 'WiFi, Gym Access, River View', TRUE, NULL);
-INSERT INTO room VALUES (110, 'Fairmont Château Laurier', 1, 2, 230, 'WiFi, Pet Friendly, Garden View', FALSE, NULL);
+INSERT INTO room VALUES (106, 'Fairmont Château Laurier', 1, 4, 300, 'WiFi, Spa Access, City View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (107, 'Fairmont Château Laurier', 1, 2, 250, 'WiFi, Breakfast Included, Mountain View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (108, 'Fairmont Château Laurier', 1, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (109, 'Fairmont Château Laurier', 1, 3, 280, 'WiFi, Gym Access, River View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (110, 'Fairmont Château Laurier', 1, 2, 230, 'WiFi, Pet Friendly, Garden View', FALSE, NULL, TRUE);
 
 -- Rooms for Fairmont Royal York
-INSERT INTO room VALUES (106, 'Fairmont Royal York', 100, 4, 350, 'WiFi, Spa Access, City View', TRUE, NULL);
-INSERT INTO room VALUES (107, 'Fairmont Royal York', 100, 2, 280, 'WiFi, Breakfast Included, Ocean View', FALSE, NULL);
-INSERT INTO room VALUES (108, 'Fairmont Royal York', 100, 3, 300, 'WiFi, Gym Access, Mountain View', TRUE, NULL);
-INSERT INTO room VALUES (109, 'Fairmont Royal York', 100, 2, 250, 'WiFi, Mini Bar, River View', FALSE, NULL);
-INSERT INTO room VALUES (110, 'Fairmont Royal York', 100, 2, 270, 'WiFi, Pet Friendly, Garden View', FALSE, NULL);
+INSERT INTO room VALUES (106, 'Fairmont Royal York', 100, 4, 350, 'WiFi, Spa Access, City View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (107, 'Fairmont Royal York', 100, 2, 280, 'WiFi, Breakfast Included, Ocean View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (108, 'Fairmont Royal York', 100, 3, 300, 'WiFi, Gym Access, Mountain View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (109, 'Fairmont Royal York', 100, 2, 250, 'WiFi, Mini Bar, River View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (110, 'Fairmont Royal York', 100, 2, 270, 'WiFi, Pet Friendly, Garden View', FALSE, NULL, TRUE);
 
 -- Rooms for Fairmont Olympic Hotel
-INSERT INTO room VALUES (101, 'Fairmont Olympic Hotel', 411, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Fairmont Olympic Hotel', 411, 2, 230, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Fairmont Olympic Hotel', 411, 2, 240, 'WiFi, Gym Access, Mountain View', FALSE, NULL);
-INSERT INTO room VALUES (104, 'Fairmont Olympic Hotel', 411, 2, 250, 'WiFi, Spa Access, Ocean View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Fairmont Olympic Hotel', 411, 4, 300, 'WiFi, Suite, Garden View', TRUE, NULL);
+INSERT INTO room VALUES (101, 'Fairmont Olympic Hotel', 411, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Fairmont Olympic Hotel', 411, 2, 230, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Fairmont Olympic Hotel', 411, 2, 240, 'WiFi, Gym Access, Mountain View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Fairmont Olympic Hotel', 411, 2, 250, 'WiFi, Spa Access, Ocean View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Fairmont Olympic Hotel', 411, 4, 300, 'WiFi, Suite, Garden View', TRUE, NULL, TRUE);
 
 -- Rooms for Fairmont Banff Springs
-INSERT INTO room VALUES (101, 'Fairmont Banff Springs', 405, 2, 250, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Fairmont Banff Springs', 405, 2, 260, 'WiFi, Breakfast Included, Mountain View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Fairmont Banff Springs', 405, 3, 280, 'WiFi, Spa Access, River View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Fairmont Banff Springs', 405, 2, 270, 'WiFi, Gym Access, City View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Fairmont Banff Springs', 405, 2, 280, 'WiFi, Pet Friendly, Forest View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Fairmont Banff Springs', 405, 2, 250, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Fairmont Banff Springs', 405, 2, 260, 'WiFi, Breakfast Included, Mountain View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Fairmont Banff Springs', 405, 3, 280, 'WiFi, Spa Access, River View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Fairmont Banff Springs', 405, 2, 270, 'WiFi, Gym Access, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Fairmont Banff Springs', 405, 2, 280, 'WiFi, Pet Friendly, Forest View', FALSE, NULL, TRUE);
 
 -- Rooms for The Plaza - A Fairmont Managed Hotel
-INSERT INTO room VALUES (101, 'The Plaza', 768, 2, 400, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'The Plaza', 768, 2, 410, 'WiFi, Breakfast Included, Central Park View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'The Plaza', 768, 3, 450, 'WiFi, Spa Access, City View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'The Plaza', 768, 2, 420, 'WiFi, Gym Access, Statue of Liberty View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'The Plaza', 768, 2, 430, 'WiFi, Pet Friendly, Empire State Building View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'The Plaza', 768, 2, 400, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'The Plaza', 768, 2, 410, 'WiFi, Breakfast Included, Central Park View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'The Plaza', 768, 3, 450, 'WiFi, Spa Access, City View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'The Plaza', 768, 2, 420, 'WiFi, Gym Access, Statue of Liberty View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'The Plaza', 768, 2, 430, 'WiFi, Pet Friendly, Empire State Building View', FALSE, NULL, TRUE);
 
 -- Rooms for Fairmont Empress
-INSERT INTO room VALUES (101, 'Fairmont Empress', 721, 2, 230, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Fairmont Empress', 721, 2, 240, 'WiFi, Breakfast Included, Harbor View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Fairmont Empress', 721, 2, 250, 'WiFi, Spa Access, Garden View', FALSE, NULL);
-INSERT INTO room VALUES (104, 'Fairmont Empress', 721, 3, 270, 'WiFi, Gym Access, Mountain View', TRUE, NULL);
-INSERT INTO room VALUES (105, 'Fairmont Empress', 721, 2, 260, 'WiFi, Pet Friendly, City View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Fairmont Empress', 721, 2, 230, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Fairmont Empress', 721, 2, 240, 'WiFi, Breakfast Included, Harbor View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Fairmont Empress', 721, 2, 250, 'WiFi, Spa Access, Garden View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Fairmont Empress', 721, 3, 270, 'WiFi, Gym Access, Mountain View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Fairmont Empress', 721, 2, 260, 'WiFi, Pet Friendly, City View', FALSE, NULL, TRUE);
 
 -- Rooms for Fairmont San Francisco
-INSERT INTO room VALUES (101, 'Fairmont San Francisco', 950, 2, 300, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Fairmont San Francisco', 950, 2, 310, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Fairmont San Francisco', 950, 2, 320, 'WiFi, Spa Access, Bay View', FALSE, NULL);
-INSERT INTO room VALUES (104, 'Fairmont San Francisco', 950, 3, 340, 'WiFi, Gym Access, Golden Gate Bridge View', TRUE, NULL);
-INSERT INTO room VALUES (105, 'Fairmont San Francisco', 950, 2, 330, 'WiFi, Pet Friendly, Alcatraz Island View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Fairmont San Francisco', 950, 2, 300, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Fairmont San Francisco', 950, 2, 310, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Fairmont San Francisco', 950, 2, 320, 'WiFi, Spa Access, Bay View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Fairmont San Francisco', 950, 3, 340, 'WiFi, Gym Access, Golden Gate Bridge View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Fairmont San Francisco', 950, 2, 330, 'WiFi, Pet Friendly, Alcatraz Island View', FALSE, NULL, TRUE);
 
 -- Rooms for Fairmont Le Château Frontenac
-INSERT INTO room VALUES (101, 'Fairmont Le Château Frontenac', 1, 2, 270, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Fairmont Le Château Frontenac', 1, 2, 280, 'WiFi, Breakfast Included, Old Quebec View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Fairmont Le Château Frontenac', 1, 3, 300, 'WiFi, Spa Access, St. Lawrence River View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Fairmont Le Château Frontenac', 1, 2, 290, 'WiFi, Gym Access, Citadel View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Fairmont Le Château Frontenac', 1, 2, 280, 'WiFi, Pet Friendly, Frontenac Castle View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Fairmont Le Château Frontenac', 1, 2, 270, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Fairmont Le Château Frontenac', 1, 2, 280, 'WiFi, Breakfast Included, Old Quebec View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Fairmont Le Château Frontenac', 1, 3, 300, 'WiFi, Spa Access, St. Lawrence River View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Fairmont Le Château Frontenac', 1, 2, 290, 'WiFi, Gym Access, Citadel View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Fairmont Le Château Frontenac', 1, 2, 280, 'WiFi, Pet Friendly, Frontenac Castle View', FALSE, NULL, TRUE);
 
 
 
 
 -- Rooms for The Westin Peachtree Plaza, Atlanta
-INSERT INTO room VALUES (101, 'The Westin Peachtree Plaza', 210, 1,220, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'The Westin Peachtree Plaza', 210, 1,230, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'The Westin Peachtree Plaza', 210, 4,240, 'WiFi, Gym Access, Downtown View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'The Westin Peachtree Plaza', 210, 3,250, 'WiFi, Spa Access, Park View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'The Westin Peachtree Plaza', 210, 2,260, 'WiFi, Pet Friendly, Garden View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'The Westin Peachtree Plaza', 210, 1,220, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'The Westin Peachtree Plaza', 210, 1,230, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'The Westin Peachtree Plaza', 210, 4,240, 'WiFi, Gym Access, Downtown View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'The Westin Peachtree Plaza', 210, 3,250, 'WiFi, Spa Access, Park View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'The Westin Peachtree Plaza', 210, 2,260, 'WiFi, Pet Friendly, Garden View', FALSE, NULL, TRUE);
 
 -- Rooms for The Westin Copley Place, Boston
-INSERT INTO room VALUES (101, 'The Westin Copley Place', 10, 2, 280, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'The Westin Copley Place', 10, 2, 290, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'The Westin Copley Place', 10, 3, 300, 'WiFi, Gym Access, River View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'The Westin Copley Place', 10, 2, 310, 'WiFi, Spa Access, Harbor View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'The Westin Copley Place', 10, 2, 320, 'WiFi, Pet Friendly, Park View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'The Westin Copley Place', 10, 2, 280, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'The Westin Copley Place', 10, 2, 290, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'The Westin Copley Place', 10, 3, 300, 'WiFi, Gym Access, River View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'The Westin Copley Place', 10, 2, 310, 'WiFi, Spa Access, Harbor View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'The Westin Copley Place', 10, 2, 320, 'WiFi, Pet Friendly, Park View', FALSE, NULL, TRUE);
 
 -- Rooms for The Westin Ottawa
-INSERT INTO room VALUES (101, 'The Westin Ottawa', 11, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'The Westin Ottawa', 11, 2, 230, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'The Westin Ottawa', 11, 3, 240, 'WiFi, Gym Access, River View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'The Westin Ottawa', 11, 2, 250, 'WiFi, Spa Access, Harbor View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'The Westin Ottawa', 11, 2, 260, 'WiFi, Pet Friendly, Garden View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'The Westin Ottawa', 11, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'The Westin Ottawa', 11, 2, 230, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'The Westin Ottawa', 11, 3, 240, 'WiFi, Gym Access, River View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'The Westin Ottawa', 11, 2, 250, 'WiFi, Spa Access, Harbor View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'The Westin Ottawa', 11, 2, 260, 'WiFi, Pet Friendly, Garden View', FALSE, NULL, TRUE);
 
 -- Rooms for The Westin Grand
-INSERT INTO room VALUES (101, 'The Westin Grand', 433, 2, 280, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'The Westin Grand',433, 2, 290, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'The Westin Grand', 433, 3, 300, 'WiFi, Gym Access, River View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'The Westin Grand', 433, 2, 310, 'WiFi, Spa Access, Downtown View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'The Westin Grand', 433, 2, 320, 'WiFi, Pet Friendly, Park View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'The Westin Grand', 433, 2, 280, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'The Westin Grand',433, 2, 290, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'The Westin Grand', 433, 3, 300, 'WiFi, Gym Access, River View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'The Westin Grand', 433, 2, 310, 'WiFi, Spa Access, Downtown View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'The Westin Grand', 433, 2, 320, 'WiFi, Pet Friendly, Park View', FALSE, NULL, TRUE);
 
 -- Rooms for The Westin Harbour Castle, Toronto
-INSERT INTO room VALUES (101, 'The Westin Harbour Castle', 1, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'The Westin Harbour Castle', 1, 2, 230, 'WiFi, Breakfast Included, Lake View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'The Westin Harbour Castle', 1, 3, 240, 'WiFi, Gym Access, City View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'The Westin Harbour Castle', 1, 2, 250, 'WiFi, Spa Access, Harbor View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'The Westin Harbour Castle', 1, 2, 260, 'WiFi, Pet Friendly, Garden View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'The Westin Harbour Castle', 1, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'The Westin Harbour Castle', 1, 2, 230, 'WiFi, Breakfast Included, Lake View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'The Westin Harbour Castle', 1, 3, 240, 'WiFi, Gym Access, City View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'The Westin Harbour Castle', 1, 2, 250, 'WiFi, Spa Access, Harbor View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'The Westin Harbour Castle', 1, 2, 260, 'WiFi, Pet Friendly, Garden View', FALSE, NULL, TRUE);
 
 -- Rooms for The Westin St. Francis San Francisco on Union Square
-INSERT INTO room VALUES (101, 'The Westin St. Francis San Francisco', 355, 2, 250, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'The Westin St. Francis San Francisco', 355, 2, 260, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'The Westin St. Francis San Francisco', 355, 3, 270, 'WiFi, Gym Access, Union Square View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'The Westin St. Francis San Francisco', 355, 2, 280, 'WiFi, Spa Access, Bay View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'The Westin St. Francis San Francisco', 355, 2, 290, 'WiFi, Pet Friendly, Garden View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'The Westin St. Francis San Francisco', 355, 2, 250, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'The Westin St. Francis San Francisco', 355, 2, 260, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'The Westin St. Francis San Francisco', 355, 3, 270, 'WiFi, Gym Access, Union Square View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'The Westin St. Francis San Francisco', 355, 2, 280, 'WiFi, Spa Access, Bay View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'The Westin St. Francis San Francisco', 355, 2, 290, 'WiFi, Pet Friendly, Garden View', FALSE, NULL, TRUE);
 
 -- Rooms for The Westin Harbour Island, Tampa
-INSERT INTO room VALUES (101, 'The Westin Harbour Island', 725, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'The Westin Harbour Island', 725, 2, 230, 'WiFi, Breakfast Included, Bay View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'The Westin Harbour Island', 725, 3, 240, 'WiFi, Gym Access, Marina View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'The Westin Harbour Island', 725, 2, 250, 'WiFi, Spa Access, Ocean View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'The Westin Harbour Island', 725, 2, 260, 'WiFi, Pet Friendly, Park View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'The Westin Harbour Island', 725, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'The Westin Harbour Island', 725, 2, 230, 'WiFi, Breakfast Included, Bay View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'The Westin Harbour Island', 725, 3, 240, 'WiFi, Gym Access, Marina View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'The Westin Harbour Island', 725, 2, 250, 'WiFi, Spa Access, Ocean View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'The Westin Harbour Island', 725, 2, 260, 'WiFi, Pet Friendly, Park View', FALSE, NULL, TRUE);
 
 -- Rooms for The Westin Riverwalk
-INSERT INTO room VALUES (101, 'The Westin Riverwalk', 420, 2, 250, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'The Westin Riverwalk', 420, 2, 260, 'WiFi, Breakfast Included, River View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'The Westin Riverwalk', 420, 3, 270, 'WiFi, Gym Access, City View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'The Westin Riverwalk', 420, 2, 280, 'WiFi, Spa Access, Garden View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'The Westin Riverwalk', 420, 2, 290, 'WiFi, Pet Friendly, Park View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'The Westin Riverwalk', 420, 2, 250, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'The Westin Riverwalk', 420, 2, 260, 'WiFi, Breakfast Included, River View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'The Westin Riverwalk', 420, 3, 270, 'WiFi, Gym Access, City View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'The Westin Riverwalk', 420, 2, 280, 'WiFi, Spa Access, Garden View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'The Westin Riverwalk', 420, 2, 290, 'WiFi, Pet Friendly, Park View', FALSE, NULL, TRUE);
 
 
 
 -- Rooms for Four Seasons Hotel Toronto
-INSERT INTO room VALUES (101, 'Four Seasons Hotel Toronto', 60, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Four Seasons Hotel Toronto', 60, 2, 230, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Four Seasons Hotel Toronto', 60, 3, 240, 'WiFi, Gym Access, Lake View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Four Seasons Hotel Toronto', 60, 2, 250, 'WiFi, Spa Access, Downtown View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Four Seasons Hotel Toronto', 60, 2, 260, 'WiFi, Pet Friendly, Park View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Four Seasons Hotel Toronto', 60, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Four Seasons Hotel Toronto', 60, 2, 230, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Four Seasons Hotel Toronto', 60, 3, 240, 'WiFi, Gym Access, Lake View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Four Seasons Hotel Toronto', 60, 2, 250, 'WiFi, Spa Access, Downtown View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Four Seasons Hotel Toronto', 60, 2, 260, 'WiFi, Pet Friendly, Park View', FALSE, NULL, TRUE);
 
 -- Rooms for Four Seasons Hotel New York Downtown
-INSERT INTO room VALUES (101, 'Four Seasons Hotel New York', 27, 2, 250, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Four Seasons Hotel New York', 27, 2, 260, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Four Seasons Hotel New York', 27, 3, 270, 'WiFi, Gym Access, River View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Four Seasons Hotel New York', 27, 2, 280, 'WiFi, Spa Access, Skyline View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Four Seasons Hotel New York', 27, 2, 290, 'WiFi, Pet Friendly, Park View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Four Seasons Hotel New York', 27, 2, 250, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Four Seasons Hotel New York', 27, 2, 260, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Four Seasons Hotel New York', 27, 3, 270, 'WiFi, Gym Access, River View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Four Seasons Hotel New York', 27, 2, 280, 'WiFi, Spa Access, Skyline View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Four Seasons Hotel New York', 27, 2, 290, 'WiFi, Pet Friendly, Park View', FALSE, NULL, TRUE);
 
 -- Rooms for Four Seasons Hotel Seattle
-INSERT INTO room VALUES (101, 'Four Seasons Hotel Seattle', 99, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Four Seasons Hotel Seattle', 99, 2, 230, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Four Seasons Hotel Seattle', 99, 3, 240, 'WiFi, Gym Access, Waterfront View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Four Seasons Hotel Seattle', 99, 2, 250, 'WiFi, Spa Access, Mountain View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Four Seasons Hotel Seattle', 99, 2, 260, 'WiFi, Pet Friendly, Park View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Four Seasons Hotel Seattle', 99, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Four Seasons Hotel Seattle', 99, 2, 230, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Four Seasons Hotel Seattle', 99, 3, 240, 'WiFi, Gym Access, Waterfront View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Four Seasons Hotel Seattle', 99, 2, 250, 'WiFi, Spa Access, Mountain View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Four Seasons Hotel Seattle', 99, 2, 260, 'WiFi, Pet Friendly, Park View', FALSE, NULL, TRUE);
 
 -- Rooms for Four Seasons Resort and Residences Whistler
-INSERT INTO room VALUES (101, 'Four Seasons Resort Whistler', 4591, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Four Seasons Resort Whistler', 4591, 2, 230, 'WiFi, Breakfast Included, Mountain View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Four Seasons Resort Whistler', 4591, 3, 240, 'WiFi, Gym Access, Forest View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Four Seasons Resort Whistler', 4591, 2, 250, 'WiFi, Spa Access, Village View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Four Seasons Resort Whistler', 4591, 2, 260, 'WiFi, Pet Friendly, Lake View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Four Seasons Resort Whistler', 4591, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Four Seasons Resort Whistler', 4591, 2, 230, 'WiFi, Breakfast Included, Mountain View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Four Seasons Resort Whistler', 4591, 3, 240, 'WiFi, Gym Access, Forest View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Four Seasons Resort Whistler', 4591, 2, 250, 'WiFi, Spa Access, Village View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Four Seasons Resort Whistler', 4591, 2, 260, 'WiFi, Pet Friendly, Lake View', FALSE, NULL, TRUE);
 
 -- Rooms for Four Seasons Resort Maui at Wailea
-INSERT INTO room VALUES (101, 'Four Seasons Resort Maui', 3900, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Four Seasons Resort Maui', 3900, 2, 230, 'WiFi, Breakfast Included, Ocean View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Four Seasons Resort Maui', 3900, 3, 240, 'WiFi, Gym Access, Garden View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Four Seasons Resort Maui', 3900, 2, 250, 'WiFi, Spa Access, Beach View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Four Seasons Resort Maui', 3900, 2, 260, 'WiFi, Pet Friendly, Mountain View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Four Seasons Resort Maui', 3900, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Four Seasons Resort Maui', 3900, 2, 230, 'WiFi, Breakfast Included, Ocean View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Four Seasons Resort Maui', 3900, 3, 240, 'WiFi, Gym Access, Garden View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Four Seasons Resort Maui', 3900, 2, 250, 'WiFi, Spa Access, Beach View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Four Seasons Resort Maui', 3900, 2, 260, 'WiFi, Pet Friendly, Mountain View', FALSE, NULL, TRUE);
 
 -- Rooms for Four Seasons Hotel Boston
-INSERT INTO room VALUES (101, 'Four Seasons Hotel Boston', 200, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Four Seasons Hotel Boston', 200, 2, 230, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Four Seasons Hotel Boston', 200, 3, 240, 'WiFi, Gym Access, Harbor View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Four Seasons Hotel Boston', 200, 2, 250, 'WiFi, Spa Access, Park View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Four Seasons Hotel Boston', 200, 2, 260, 'WiFi, Pet Friendly, River View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Four Seasons Hotel Boston', 200, 2, 220, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Four Seasons Hotel Boston', 200, 2, 230, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Four Seasons Hotel Boston', 200, 3, 240, 'WiFi, Gym Access, Harbor View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Four Seasons Hotel Boston', 200, 2, 250, 'WiFi, Spa Access, Park View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Four Seasons Hotel Boston', 200, 2, 260, 'WiFi, Pet Friendly, River View', FALSE, NULL, TRUE);
 
 -- Rooms for Four Seasons Hotel Los Angeles at Beverly Hills
-INSERT INTO room VALUES (101, 'Four Seasons Hotel at Beverly Hills', 300, 2, 280, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Four Seasons Hotel at Beverly Hills', 300, 2, 290, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Four Seasons Hotel at Beverly Hills', 300, 3, 300, 'WiFi, Gym Access, Mountain View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Four Seasons Hotel at Beverly Hills', 300, 2, 310, 'WiFi, Spa Access, Ocean View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Four Seasons Hotel at Beverly Hills', 300, 2, 320, 'WiFi, Pet Friendly, City View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Four Seasons Hotel at Beverly Hills', 300, 2, 280, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Four Seasons Hotel at Beverly Hills', 300, 2, 290, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Four Seasons Hotel at Beverly Hills', 300, 3, 300, 'WiFi, Gym Access, Mountain View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Four Seasons Hotel at Beverly Hills', 300, 2, 310, 'WiFi, Spa Access, Ocean View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Four Seasons Hotel at Beverly Hills', 300, 2, 320, 'WiFi, Pet Friendly, City View', FALSE, NULL, TRUE);
 
 -- Rooms for Four Seasons Hotel Chicago
-INSERT INTO room VALUES (101, 'Four Seasons Hotel Chicago', 120, 2, 250, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Four Seasons Hotel Chicago',120, 2, 260, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Four Seasons Hotel Chicago', 120, 3, 270, 'WiFi, Gym Access, River View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Four Seasons Hotel Chicago', 120, 2, 280, 'WiFi, Spa Access, Skyline View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Four Seasons Hotel Chicago', 120, 2, 290, 'WiFi, Pet Friendly, Park View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Four Seasons Hotel Chicago', 120, 2, 250, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Four Seasons Hotel Chicago',120, 2, 260, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Four Seasons Hotel Chicago', 120, 3, 270, 'WiFi, Gym Access, River View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Four Seasons Hotel Chicago', 120, 2, 280, 'WiFi, Spa Access, Skyline View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Four Seasons Hotel Chicago', 120, 2, 290, 'WiFi, Pet Friendly, Park View', FALSE, NULL, TRUE);
 
 
 
 -- Rooms for Hilton Toronto
-INSERT INTO room VALUES (101, 'Hilton Toronto', 145, 2, 150, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Hilton Toronto', 145, 2, 160, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Hilton Toronto', 145, 3, 170, 'WiFi, Gym Access, Lake View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Hilton Toronto', 145, 2, 180, 'WiFi, Spa Access, Downtown View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Hilton Toronto', 145, 2, 190, 'WiFi, Pet Friendly, Park View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Hilton Toronto', 145, 2, 150, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Hilton Toronto', 145, 2, 160, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Hilton Toronto', 145, 3, 170, 'WiFi, Gym Access, Lake View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Hilton Toronto', 145, 2, 180, 'WiFi, Spa Access, Downtown View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Hilton Toronto', 145, 2, 190, 'WiFi, Pet Friendly, Park View', FALSE, NULL, TRUE);
 
 -- Rooms for Hilton New York Midtown
-INSERT INTO room VALUES (101, 'Hilton New York Midtown', 1335, 2, 200, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Hilton New York Midtown', 1335, 2, 210, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Hilton New York Midtown', 1335, 3, 220, 'WiFi, Gym Access, River View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Hilton New York Midtown', 1335, 2, 230, 'WiFi, Spa Access, Skyline View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Hilton New York Midtown', 1335, 2, 240, 'WiFi, Pet Friendly, Park View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Hilton New York Midtown', 1335, 2, 200, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Hilton New York Midtown', 1335, 2, 210, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Hilton New York Midtown', 1335, 3, 220, 'WiFi, Gym Access, River View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Hilton New York Midtown', 1335, 2, 230, 'WiFi, Spa Access, Skyline View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Hilton New York Midtown', 1335, 2, 240, 'WiFi, Pet Friendly, Park View', FALSE, NULL, TRUE);
 
 -- Rooms for Hilton Seattle Downtown
-INSERT INTO room VALUES (101, 'Hilton Seattle', 1301, 2, 170, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Hilton Seattle', 1301, 2, 180, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Hilton Seattle', 1301, 3, 190, 'WiFi, Gym Access, Waterfront View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Hilton Seattle', 1301, 2, 200, 'WiFi, Spa Access, Mountain View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Hilton Seattle', 1301, 2, 210, 'WiFi, Pet Friendly, Park View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Hilton Seattle', 1301, 2, 170, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Hilton Seattle', 1301, 2, 180, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Hilton Seattle', 1301, 3, 190, 'WiFi, Gym Access, Waterfront View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Hilton Seattle', 1301, 2, 200, 'WiFi, Spa Access, Mountain View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Hilton Seattle', 1301, 2, 210, 'WiFi, Pet Friendly, Park View', FALSE, NULL, TRUE);
 
 -- Rooms for Hilton Whistler Resort & Spa
-INSERT INTO room VALUES (101, 'Hilton Whistler Resort', 4050, 2, 180, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Hilton Whistler Resort', 4050, 2, 190, 'WiFi, Breakfast Included, Mountain View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Hilton Whistler Resort', 4050, 3, 200, 'WiFi, Gym Access, Forest View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Hilton Whistler Resort', 4050, 2, 210, 'WiFi, Spa Access, Village View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Hilton Whistler Resort', 4050, 2, 220, 'WiFi, Pet Friendly, Lake View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Hilton Whistler Resort', 4050, 2, 180, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Hilton Whistler Resort', 4050, 2, 190, 'WiFi, Breakfast Included, Mountain View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Hilton Whistler Resort', 4050, 3, 200, 'WiFi, Gym Access, Forest View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Hilton Whistler Resort', 4050, 2, 210, 'WiFi, Spa Access, Village View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Hilton Whistler Resort', 4050, 2, 220, 'WiFi, Pet Friendly, Lake View', FALSE, NULL, TRUE);
 
 -- Rooms for Hilton Hawaiian Village Waikiki Beach Resort
-INSERT INTO room VALUES (101, 'Hilton Hawaiian Village', 2005, 2, 200, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Hilton Hawaiian Village', 2005, 2, 210, 'WiFi, Breakfast Included, Ocean View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Hilton Hawaiian Village', 2005, 3, 220, 'WiFi, Gym Access, Beach View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Hilton Hawaiian Village', 2005, 2, 230, 'WiFi, Spa Access, Garden View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Hilton Hawaiian Village', 2005, 2, 240, 'WiFi, Pet Friendly, Mountain View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Hilton Hawaiian Village', 2005, 2, 200, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Hilton Hawaiian Village', 2005, 2, 210, 'WiFi, Breakfast Included, Ocean View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Hilton Hawaiian Village', 2005, 3, 220, 'WiFi, Gym Access, Beach View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Hilton Hawaiian Village', 2005, 2, 230, 'WiFi, Spa Access, Garden View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Hilton Hawaiian Village', 2005, 2, 240, 'WiFi, Pet Friendly, Mountain View', FALSE, NULL, TRUE);
 
 -- Rooms for Hilton Boston Back Bay
-INSERT INTO room VALUES (101, 'Hilton Boston Back Bay', 40, 2, 160, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Hilton Boston Back Bay', 40, 2, 170, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Hilton Boston Back Bay', 40, 3, 180, 'WiFi, Gym Access, River View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Hilton Boston Back Bay', 40, 2, 190, 'WiFi, Spa Access, Skyline View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Hilton Boston Back Bay', 40, 2, 200, 'WiFi, Pet Friendly, Park View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Hilton Boston Back Bay', 40, 2, 160, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Hilton Boston Back Bay', 40, 2, 170, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Hilton Boston Back Bay', 40, 3, 180, 'WiFi, Gym Access, River View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Hilton Boston Back Bay', 40, 2, 190, 'WiFi, Spa Access, Skyline View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Hilton Boston Back Bay', 40, 2, 200, 'WiFi, Pet Friendly, Park View', FALSE, NULL, TRUE);
 
 -- Rooms for Hilton Los Angeles Airport
-INSERT INTO room VALUES (101, 'Hilton Los Angeles Airport', 5711, 2, 140, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Hilton Los Angeles Airport', 5711, 2, 150, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Hilton Los Angeles Airport', 5711, 3, 160, 'WiFi, Gym Access, Runway View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Hilton Los Angeles Airport', 5711, 2, 170, 'WiFi, Spa Access, Ocean View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Hilton Los Angeles Airport', 5711, 2, 180, 'WiFi, Pet Friendly, Park View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Hilton Los Angeles Airport', 5711, 2, 140, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Hilton Los Angeles Airport', 5711, 2, 150, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Hilton Los Angeles Airport', 5711, 3, 160, 'WiFi, Gym Access, Runway View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Hilton Los Angeles Airport', 5711, 2, 170, 'WiFi, Spa Access, Ocean View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Hilton Los Angeles Airport', 5711, 2, 180, 'WiFi, Pet Friendly, Park View', FALSE, NULL, TRUE);
 
 -- Rooms for Hilton Chicago
-INSERT INTO room VALUES (101, 'Hilton Chicago', 720, 2, 170, 'WiFi, TV, Mini Bar', FALSE, NULL);
-INSERT INTO room VALUES (102, 'Hilton Chicago', 720, 2, 180, 'WiFi, Breakfast Included, City View', FALSE, NULL);
-INSERT INTO room VALUES (103, 'Hilton Chicago', 720, 3, 190, 'WiFi, Gym Access, Lake View', TRUE, NULL);
-INSERT INTO room VALUES (104, 'Hilton Chicago', 720, 2, 200, 'WiFi, Spa Access, Downtown View', FALSE, NULL);
-INSERT INTO room VALUES (105, 'Hilton Chicago', 720, 2, 210, 'WiFi, Pet Friendly, Park View', FALSE, NULL);
+INSERT INTO room VALUES (101, 'Hilton Chicago', 720, 2, 170, 'WiFi, TV, Mini Bar', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (102, 'Hilton Chicago', 720, 2, 180, 'WiFi, Breakfast Included, City View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (103, 'Hilton Chicago', 720, 3, 190, 'WiFi, Gym Access, Lake View', TRUE, NULL, TRUE);
+INSERT INTO room VALUES (104, 'Hilton Chicago', 720, 2, 200, 'WiFi, Spa Access, Downtown View', FALSE, NULL, TRUE);
+INSERT INTO room VALUES (105, 'Hilton Chicago', 720, 2, 210, 'WiFi, Pet Friendly, Park View', FALSE, NULL, TRUE);
 
 
 -- ----------------------------
@@ -601,6 +646,3 @@ INSERT INTO customer VALUES ('987654323', 'Sophia', 'Davis', 'Philadelphia', 'Pe
 INSERT INTO customer VALUES ('246801357', 'James', 'Wilson', 'Phoenix', 'Arizona', 'Palm St', 852, '2024-03-10');
 INSERT INTO customer VALUES ('369258147', 'Emily', 'Lopez', 'San Diego', 'California', 'Ocean Blvd', 753, '2024-03-15');
 INSERT INTO customer VALUES ('951357924', 'Alexander', 'Hernandez', 'Dallas', 'Texas', 'Elm St', 357, '2024-03-20');
-
-
-
