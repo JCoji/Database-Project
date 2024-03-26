@@ -5,16 +5,19 @@ public class Renting {
     private Date startDate;
     private Date endDate;
     private int customerId;
+
+    private int employeeId;
     private boolean paid;
     private int roomNum;
     private double roomPrice;
     private String hotelName;
     private int hotelNum;
 
-    public Renting(Date startDate, Date endDate, int customerId, boolean paid, int roomNum, double roomPrice, String hotelName, int hotelNum) {
+    public Renting(Date startDate, Date endDate, int customerId, int employeeId, boolean paid, int roomNum, double roomPrice, String hotelName, int hotelNum) {
         this.startDate = startDate;
         this.endDate = endDate;
         this.customerId = customerId;
+        this.employeeId = employeeId;
         this.paid = paid;
         this.roomNum = roomNum;
         this.roomPrice = roomPrice;
@@ -44,6 +47,14 @@ public class Renting {
 
     public void setCustomerId(int customerId) {
         this.customerId = customerId;
+    }
+
+    public int getEmployeeId() {
+        return employeeId;
+    }
+
+    public void setEmployeeId(int employeeId) {
+        this.employeeId = employeeId;
     }
 
     public boolean isPaid() {

@@ -39,10 +39,10 @@ public class BookingService {
                     new Date(rs.getDate("startDate").toString()),
                     new Date(rs.getDate("endDate").toString()),
                     rs.getInt("customerID"),
-                    rs.getDouble("roomPrice"),
-                    rs.getInt("roomNum"),
-                    rs.getString("hotelName"),
-                    rs.getInt("hotelNum")
+                    rs.getDouble("room_price"),
+                    rs.getInt("room_num"),
+                    rs.getString("hotel_name"),
+                    rs.getInt("hotel_num")
                 );
 
                 // adds new booking to the list

@@ -39,8 +39,9 @@ public class RentingService {
                         new Date(rs.getDate("startDate").toString()),
                         new Date(rs.getDate("endDate").toString()),
                         rs.getInt("customerID"),
+                        rs.getInt("employeeID"),
                         rs.getBoolean("status_of_payment"),
-                        rs.getInt("roomNum"),
+                        rs.getInt("room_num"),
                         rs.getDouble("room_price"),
                         rs.getString("hotel_name"),
                         rs.getInt("hotel_num")
@@ -122,7 +123,7 @@ public class RentingService {
         ConnectionDB db = new ConnectionDB();
 
         // sql query
-        String sql = "INSERT INTO renting (startDate, endDate, customerID, status_of_payment, room_num, room_price, hotel_name, hotel_num) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
+        String sql = "INSERT INTO renting (startDate, endDate, customerID, status_of_payment, room_num, room_price, hotel_name, hotel_num) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
 
         // try connecting to DB, catch and trow any error
         try {
@@ -134,11 +135,12 @@ public class RentingService {
             stmt.setDate(1, java.sql.Date.valueOf(renting.getStartDate().toString()));
             stmt.setDate(2, java.sql.Date.valueOf(renting.getEndDate().toString()));
             stmt.setInt(3, renting.getCustomerID());
-            stmt.setBoolean(4, renting.isPaid());
-            stmt.setInt(5, renting.getRoomNum());
-            stmt.setDouble(6, renting.getRoomPrice());
-            stmt.setObject(7, renting.getHotelName(), VARCHAR, 45);
-            stmt.setInt(8, renting.getHotelNum());
+            stmt.setInt(4, renting.getEmployeeId());
+            stmt.setBoolean(5, renting.isPaid());
+            stmt.setInt(6, renting.getRoomNum());
+            stmt.setDouble(7, renting.getRoomPrice());
+            stmt.setObject(8, renting.getHotelName(), VARCHAR, 45);
+            stmt.setInt(9, renting.getHotelNum());
 
             // execute statement
             stmt.executeUpdate();
