@@ -1,7 +1,7 @@
 -- ----------------------------
 -- Table structure for Hotel Chain
 -- ----------------------------
-DROP TABLE IF EXISTS hotelChain;
+--DROP TABLE IF EXISTS hotelChain;
 CREATE TABLE IF NOT EXISTS hotelChain (
   name varchar(45) PRIMARY KEY,
   city varchar(45) NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS hotelChain (
 -- ----------------------------
 -- Table structure for Hotels
 -- ----------------------------
-DROP TABLE IF EXISTS hotel;
+--DROP TABLE IF EXISTS hotel;
 CREATE TABLE IF NOT EXISTS hotel (
   name varchar(45),
   chain_name varchar(45),
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS hotel (
 -- ----------------------------
 -- Table structure for Rooms
 -- ----------------------------
-DROP TABLE IF EXISTS room;
+--DROP TABLE IF EXISTS room;
 CREATE TABLE IF NOT EXISTS room (
     room_num int NOT NULL CHECK (room_num >= 0),
     hotel_name varchar(45),
@@ -48,12 +48,12 @@ CREATE TABLE IF NOT EXISTS room (
     PRIMARY KEY (room_num, hotel_name, hotel_num)
 );
 
-CREATE INDEX rooms_id_index ON room (room_num, hotelNum);
+CREATE INDEX rooms_id_index ON room (room_num, hotel_num);
 
 -- ----------------------------
 -- Table structure for Customer
 -- ----------------------------
-DROP TABLE IF EXISTS customer;
+--DROP TABLE IF EXISTS customer;
 CREATE TABLE IF NOT EXISTS customer (
     id int CHECK (id > 0) PRIMARY KEY,
     firstName varchar(45) NOT NULL,
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS customer (
 -- ----------------------------
 -- Table structure for Employee
 -- ----------------------------
-DROP TABLE IF EXISTS employee;
+--DROP TABLE IF EXISTS employee;
 CREATE TABLE IF NOT EXISTS employee (
     id int CHECK (id > 0) PRIMARY KEY,
     firstName varchar(45) NOT NULL,
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS employee (
 -- ----------------------------
 -- Table structure for Renting
 -- ----------------------------
-DROP TABLE IF EXISTS renting;
+--DROP TABLE IF EXISTS renting;
 CREATE TABLE IF NOT EXISTS renting (
     startDate date NOT NULL,
     endDate date NOT NULL,
@@ -107,7 +107,7 @@ CREATE INDEX renting_date_index ON renting (startDate, endDate, customerID);
 -- ----------------------------
 -- Table structure for booking
 -- ----------------------------
-DROP TABLE IF EXISTS booking;
+--DROP TABLE IF EXISTS booking;
 CREATE TABLE IF NOT EXISTS booking (
     startDate date,
     endDate date,
@@ -127,7 +127,7 @@ CREATE INDEX booking_date_index ON booking (startDate, endDate, customerID);
 -- ----------------------------
 -- Table structure for renting archive
 -- ----------------------------
-DROP TABLE IF EXISTS renting_archive;
+--DROP TABLE IF EXISTS renting_archive;
 CREATE TABLE IF NOT EXISTS renting_archive(
     startDate date,
     endDate date,
@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS renting_archive(
 -- ----------------------------
 -- Table structure for booking archive
 -- ----------------------------
-DROP TABLE IF EXISTS booking_archive;
+--DROP TABLE IF EXISTS booking_archive;
 CREATE TABLE IF NOT EXISTS booking_archive(
     startDate date,
     endDate date,
@@ -261,7 +261,7 @@ CREATE VIEW rooms_in_area AS
 SELECT h.city, h.province, COUNT(room_num)
 FROM hotel H JOIN room R
 ON H.name = R.hotel_name AND H.streetNum = R.hotel_num
-WHERE r.isAvailable = true
+WHERE isAvailable = true
 GROUP BY
     H.city,
     H.province;
@@ -273,7 +273,11 @@ GROUP BY
 CREATE VIEW rooms_in_hotel AS
 SELECT hotel_name, hotel_num, COUNT(room_num)
 FROM room
-WHERE isAvailable = true;
+WHERE isAvailable = true
+GROUP BY
+    hotel_name,
+	hotel_num;
+
 
 -- ----------------------------
 -- Records of Hotel Chains
@@ -646,3 +650,5 @@ INSERT INTO customer VALUES ('987654323', 'Sophia', 'Davis', 'Philadelphia', 'Pe
 INSERT INTO customer VALUES ('246801357', 'James', 'Wilson', 'Phoenix', 'Arizona', 'Palm St', 852, '2024-03-10');
 INSERT INTO customer VALUES ('369258147', 'Emily', 'Lopez', 'San Diego', 'California', 'Ocean Blvd', 753, '2024-03-15');
 INSERT INTO customer VALUES ('951357924', 'Alexander', 'Hernandez', 'Dallas', 'Texas', 'Elm St', 357, '2024-03-20');
+
+INSERT INTO booking VALUES('2020-02-02', '2020-02-20', '987654323', 140, 101, 'Courtyard', 6787);

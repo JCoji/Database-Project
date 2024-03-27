@@ -205,4 +205,46 @@ public class RentingService {
 
     }
 
+    public String updatePaymentStatus (Date sd, Date ed, Integer id, boolean newVal) throws Exception {
+        String msg = "";
+        Connection con = null;
+
+        // connection object
+        ConnectionDB db = new ConnectionDB();
+
+        // sql query
+        String sql = "UPDATE renting SET status_of_payment = ? WHERE startDate = ? AND endDate = ? AND customerID = ?;";
+
+        // try to connect to DB, catch any errors
+        try {
+
+            con = db.getConnection();
+
+            // prepare statement
+            PreparedStatement stmt = con.prepareStatement(sql);
+            stmt.setObject(1, newVal);
+            stmt.setDate(2, java.sql.Date.valueOf(sd.toString()));
+            stmt.setDate(3, java.sql.Date.valueOf(ed.toString()));
+            stmt.setInt(4, id);
+
+
+            // execute statement
+            stmt.executeUpdate();
+
+            // close statement
+            stmt.close();
+
+            //close connection
+            con.close();
+            db.close();
+
+            return msg;
+
+        } catch (Exception e) {
+
+            throw new Exception("Error while updating: " + e.getMessage());
+
+        }
+    }
+
 }
