@@ -10,8 +10,9 @@ public class Room {
     private String amenities;
     private boolean expandable;
     private String problems = "";
+    private boolean isAvailable;
 
-    public Room(int roomNum, String hotelName, int hotelNum, int capacity, int price, String amenities, boolean expandable, String problems) {
+    public Room(int roomNum, String hotelName, int hotelNum, int capacity, int price, String amenities, boolean expandable, String problems, boolean isAvailable) {
         this.roomNum = roomNum;
         this.hotelName = hotelName;
         this.hotelNum = hotelNum;
@@ -20,6 +21,7 @@ public class Room {
         this.amenities = amenities;
         this.expandable = expandable;
         this.problems = problems;
+        this.isAvailable = isAvailable;
     }
 
     public int getRoomNum() {
@@ -84,6 +86,14 @@ public class Room {
 
     public void setProblems(String problems) {
         this.problems = problems;
+    }
+
+    public boolean isAvailable() {
+        return isAvailable;
+    }
+
+    public void setAvailable(boolean available) {
+        isAvailable = available;
     }
 
     @Override

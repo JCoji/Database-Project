@@ -50,4 +50,13 @@ public class Date {
                 "-"+ day;
     }
 
+    public boolean overlaps(Date end1, Date start2, Date end2){
+        int startA = Integer.parseInt("" + year + month + day);
+        int endA = Integer.parseInt("" +  end1.getYear() + end1.getMonth() + end1.getDay());
+        int startB =  Integer.parseInt("" +  start2.getYear() + start2.getMonth() + start2.getDay());
+        int endB = Integer.parseInt("" +  end2.getYear() + end2.getMonth() + end2.getDay());
+
+        return startA <= endB && endA >= startB;
+    }
+
 }

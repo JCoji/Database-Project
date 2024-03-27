@@ -42,7 +42,8 @@ public class RoomService {
                     rs.getInt("price"),
                     rs.getString("amenities"),
                     rs.getBoolean("expandable"),
-                    rs.getString("problems")
+                    rs.getString("problems"),
+                    rs.getBoolean("isAvailable")
                 );
 
                 // adds new room to the list
@@ -58,6 +59,142 @@ public class RoomService {
             db.close();
 
             // return the list of rooms
+            return rooms;
+
+        } catch (Exception e) {
+
+            // throw the error
+            throw new Exception(e.getMessage());
+
+        }
+    }
+
+    public List<Room> getBookingsFromBooking(Date startDate, Date endDate) throws Exception {
+
+        // sql query
+        String sql = "SELECT * FROM room NATURAL LEFT OUTER JOIN booking";
+
+        // database connection object
+        ConnectionDB db = new ConnectionDB();
+
+        //List to store and return all bookings from database
+        List<Room> rooms = new ArrayList<>();
+
+        //Try to connect to DB, catch any exceptions
+        try {
+
+            Connection con = db.getConnection();
+
+            //Prepares statement
+            PreparedStatement stmt = con.prepareStatement(sql);
+
+            // execute query
+            ResultSet rs = stmt.executeQuery();
+
+            // store bookings in list
+            while (rs.next()) {
+                Room r = new Room(
+                        rs.getInt("room_num"),
+                        rs.getString("hotel_name"),
+                        rs.getInt("hotel_num"),
+                        rs.getInt("capacity"),
+                        rs.getInt("price"),
+                        rs.getString("amenities"),
+                        rs.getBoolean("expandable"),
+                        rs.getString("problems"),
+                        rs.getBoolean("isAvailable")
+                );
+
+
+                // create new booking
+                if(rs.getDate("startDate") != null && rs.getDate("endDate") != null){
+                    //System.out.println(rs.getDate("startDate") + " , " + rs.getDate("endDate"));
+                    if(!startDate.overlaps(endDate, new Date(rs.getDate("startDate").toString()), new Date(rs.getDate("endDate").toString()))){
+                        rooms.add(r);
+                    }
+                }else{
+                    //System.out.println("OVERLAPS");
+                    rooms.add(r);
+                }
+
+            }
+
+            // close the result set
+            rs.close();
+
+            // close the statement
+            stmt.close();
+            con.close();
+            db.close();
+
+            // return the list of bookings
+            return rooms;
+
+        } catch (Exception e) {
+
+            // throw the error
+            throw new Exception(e.getMessage());
+
+        }
+    }
+
+    public List<Room> getBookingsFromRenting(Date startDate, Date endDate) throws Exception {
+
+        // sql query
+        String sql = "SELECT * FROM room NATURAL LEFT OUTER JOIN renting";
+
+        // database connection object
+        ConnectionDB db = new ConnectionDB();
+
+        //List to store and return all bookings from database
+        List<Room> rooms = new ArrayList<>();
+
+
+        //Try to connect to DB, catch any exceptions
+        try {
+
+            Connection con = db.getConnection();
+
+            //Prepares statement
+            PreparedStatement stmt = con.prepareStatement(sql);
+
+            // execute query
+            ResultSet rs = stmt.executeQuery();
+
+            // store bookings in list
+            while (rs.next()) {
+                Room r = new Room(
+                        rs.getInt("room_num"),
+                        rs.getString("hotel_name"),
+                        rs.getInt("hotel_num"),
+                        rs.getInt("capacity"),
+                        rs.getInt("price"),
+                        rs.getString("amenities"),
+                        rs.getBoolean("expandable"),
+                        rs.getString("problems"),
+                        rs.getBoolean("isAvailable")
+                );
+
+
+                if(rs.getDate("startDate") != null && rs.getDate("endDate") != null){
+                    if(!startDate.overlaps(endDate, new Date(rs.getDate("startDate").toString()), new Date(rs.getDate("endDate").toString()))){
+                        rooms.add(r);
+                    }
+                }else{
+                    rooms.add(r);
+                }
+
+            }
+
+            // close the result set
+            rs.close();
+
+            // close the statement
+            stmt.close();
+            con.close();
+            db.close();
+
+            // return the list of bookings
             return rooms;
 
         } catch (Exception e) {
