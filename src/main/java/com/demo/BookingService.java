@@ -68,6 +68,71 @@ public class BookingService {
         }
     }
 
+    public List<Booking> getBookingsFromHotel(String hotelName, int streetNum) throws Exception {
+
+        // sql query
+        String sql = "SELECT * FROM booking WHERE hotel_name = ? AND hotel_num = ?;";
+
+        // database connection object
+        ConnectionDB db = new ConnectionDB();
+
+        //List to store and return all bookings from database
+        List<Booking> bookings = new ArrayList<>();
+
+        //Try to connect to DB, catch any exceptions
+        try {
+
+            Connection con = db.getConnection();
+
+            //Prepares statement
+            PreparedStatement stmt = con.prepareStatement(sql);
+
+            // set the ? of the statement
+            stmt.setString(1, hotelName);
+            stmt.setInt(2, streetNum);
+
+            // execute query
+            //stmt.executeUpdate();
+
+            // execute query
+            ResultSet rs = stmt.executeQuery();
+
+            // store bookings in list
+            while (rs.next()) {
+                // create new booking
+                Booking b = new Booking(
+                        new Date(rs.getDate("startDate").toString()),
+                        new Date(rs.getDate("endDate").toString()),
+                        rs.getInt("customerID"),
+                        rs.getDouble("room_price"),
+                        rs.getInt("room_num"),
+                        rs.getString("hotel_name"),
+                        rs.getInt("hotel_num")
+                );
+
+                // adds new booking to the list
+                bookings.add(b);
+            }
+
+            // close the result set
+            rs.close();
+
+            // close the statement
+            stmt.close();
+            con.close();
+            db.close();
+
+            // return the list of bookings
+            return bookings;
+
+        } catch (Exception e) {
+
+            // throw the error
+            throw new Exception(e.getMessage());
+
+        }
+    }
+
     public String deleteBooking(Date sd, Date ed, Integer id) throws Exception {
 
         Connection con = null;
