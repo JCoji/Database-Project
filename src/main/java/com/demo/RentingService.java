@@ -123,7 +123,7 @@ public class RentingService {
         ConnectionDB db = new ConnectionDB();
 
         // sql query
-        String sql = "INSERT INTO renting (startDate, endDate, customerID, status_of_payment, room_num, room_price, hotel_name, hotel_num) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
+        String sql = "INSERT INTO renting (startDate, endDate, customerID, employeeID,status_of_payment, room_num, room_price, hotel_name, hotel_num) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
 
         // try connecting to DB, catch and trow any error
         try {
@@ -139,7 +139,7 @@ public class RentingService {
             stmt.setBoolean(5, renting.isPaid());
             stmt.setInt(6, renting.getRoomNum());
             stmt.setDouble(7, renting.getRoomPrice());
-            stmt.setObject(8, renting.getHotelName(), VARCHAR, 45);
+            stmt.setString(8, renting.getHotelName());
             stmt.setInt(9, renting.getHotelNum());
 
             // execute statement
