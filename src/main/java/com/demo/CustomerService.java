@@ -118,7 +118,7 @@ public class CustomerService {
         ConnectionDB db = new ConnectionDB();
 
         // sql query
-        String sql = "INSERT INTO customer (id, firstName, surName, city, province, streetName, streetNum, registration_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
+        String sql = "INSERT INTO customer (id, firstName, surName, city, province, streetName, streetNum, registration_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 
         // try connecting to DB, catch and trow any error
         try {

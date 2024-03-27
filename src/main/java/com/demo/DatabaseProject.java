@@ -21,9 +21,9 @@ public class DatabaseProject {
             if (Integer.parseInt(answer) == 0){//EMPLOYEE
                 employee();
             }
-            /*else if (Integer.parseInt(answer) == 1){//CUSTOMER
-
-            }**/
+            else if (Integer.parseInt(answer) == 1){//CUSTOMER
+                customer();
+            }
             else if (Integer.parseInt(answer) == 2){
                 System.out.println("ENDING PROGRAM.");
                 runMain = false;
@@ -41,6 +41,9 @@ public class DatabaseProject {
     //A - Lists all bookings and can delete one using start date/end date/customer id.
     //B - Can create new rentings.
     //C - Can update payments.
+    //D = Create/edit/delete hotel information.
+    //E = Create/edit/delete employee information.
+    //F = Create/edit/delete room information.
     //Z - Return to main menu (employee or customer).
     public static void employee(){
         Scanner keyboard = new Scanner(System.in);
@@ -48,6 +51,9 @@ public class DatabaseProject {
         System.out.println("A - MOVE BOOKINGS INTO RENTINGS");
         System.out.println("B - CREATE RENTINGS");
         System.out.println("C - UPDATE CUSTOMER PAYMENTS");
+        System.out.println("D - CREATE/EDIT/DELETE HOTEL INFORMATION");
+        System.out.println("E - CREATE/EDIT/DELETE EMPLOYEE INFORMATION");
+        System.out.println("F - CREATE/EDIT/DELETE ROOM INFORMATION");
         System.out.println("Z - RETURN");
         System.out.print("ENTER: ");
 
@@ -70,7 +76,7 @@ public class DatabaseProject {
             BookingService bookService = new BookingService();
             List<Booking> bookings = new ArrayList<Booking>();
             try {
-                bookings = bookService.getBookings();
+                bookings = bookService.getBookingsFromHotel(hotelName, streetNum);
             }
             catch (Exception e) {
                 e.printStackTrace();
@@ -141,7 +147,7 @@ public class DatabaseProject {
                 e.printStackTrace();
             }
 
-            System.out.println("\nNEW RENTING CREATED.");
+            System.out.println("\nNEW RENTING CREATED.\n");
             return;
         }
 
@@ -172,19 +178,92 @@ public class DatabaseProject {
 
             //Change status_of_payment value to true.
             try{
-                rentService.updateRenting(rentings.get(updateRent).getStartDate(), rentings.get(updateRent).getEndDate(),
-                        rentings.get(updateRent).getCustomerID(), "status_of_payment", "TRUE");
+                rentService.updatePaymentStatus(rentings.get(updateRent).getStartDate(), rentings.get(updateRent).getEndDate(),
+                        rentings.get(updateRent).getCustomerID(), true);
             }
             catch (Exception e){
                 e.printStackTrace();
             }
 
-            System.out.print("RENTING PAYMENT UPDATED: ");
+            System.out.println("\nRENTING PAYMENT UPDATED.\n");
 
             return;
         }
 
-        else if(answer.compareToIgnoreCase("Z") == 0){
+        else if(answer.compareToIgnoreCase("D") == 0) {
+            System.out.println(("\n--------------- CREATE/DELETE/EDIT HOTEL INFORMATION ---------------"));
+            Scanner keyboard2 = new Scanner(System.in);
+            EditTable hotelEditor = new EditTable();
+            String opt;
+
+            System.out.println("A - CREATE A NEW HOTEL");
+            System.out.println("B - DELETE A HOTEL");
+            System.out.println("C - EDIT A HOTEL");
+            System.out.print("ENTER: ");
+
+            opt = keyboard2.nextLine();
+
+            if (opt.compareToIgnoreCase("A") == 0){//CREATE HOTEL
+                hotelEditor.createHotel();
+            }
+            else if (opt.compareToIgnoreCase("B") == 0){//DELETE HOTEL
+                hotelEditor.deleteHotel();
+            }
+            else if (opt.compareToIgnoreCase("C") == 0){//EDIT HOTEL
+                hotelEditor.editHotel();
+            }
+            return;
+        }
+
+        else if(answer.compareToIgnoreCase("E") == 0) {
+            System.out.println(("\n--------------- CREATE/DELETE/EDIT EMPLOYEE INFORMATION ---------------"));
+            Scanner keyboard2 = new Scanner(System.in);
+            EditTable employeeEditor = new EditTable();
+            String opt;
+
+            System.out.println("A - CREATE A NEW EMPLOYEE");
+            System.out.println("B - DELETE AN EMPLOYEE");
+            System.out.println("C - EDIT AN EMPLOYEE");
+            System.out.print("ENTER: ");
+
+            opt = keyboard2.nextLine();
+
+            if (opt.compareToIgnoreCase("A") == 0){//CREATE EMPLOYEE
+                employeeEditor.createEmployee();
+            }
+            else if (opt.compareToIgnoreCase("B") == 0){//DELETE EMPLOYEE
+                employeeEditor.deleteEmployee();
+            }
+            else if (opt.compareToIgnoreCase("C") == 0){//EDIT EMPLOYEE
+                employeeEditor.editEmployee();
+            }
+
+            return;
+        }
+
+        else if(answer.compareToIgnoreCase("F") == 0){
+            System.out.println(("\n--------------- CREATE/DELETE/EDIT ROOM INFORMATION ---------------"));
+            Scanner keyboard2 = new Scanner(System.in);
+            EditTable roomEditor = new EditTable();
+            String opt;
+
+            System.out.println("A - CREATE A NEW ROOM");
+            System.out.println("B - DELETE A ROOM");
+            System.out.println("C - EDIT A ROOM");
+            System.out.print("ENTER: ");
+
+            opt = keyboard2.nextLine();
+
+            if (opt.compareToIgnoreCase("A") == 0){//CREATE ROOM
+                roomEditor.createRoom();
+            }
+            else if (opt.compareToIgnoreCase("B") == 0){//DELETE ROOM
+                roomEditor.deleteRoom();
+            }
+            else if (opt.compareToIgnoreCase("C") == 0){//EDIT ROOM
+                roomEditor.editRoom();
+            }
+
             return;
         }
 
@@ -195,48 +274,83 @@ public class DatabaseProject {
         }
     }
 
+    //----------------------------------------CUSTOMER----------------------------------------
     //When user chooses option 2, they get sent here.
+    //Check if they are in the database, if not forces them to create a new profile.
     //A - Search rooms.
     //B - Create a booking.
     //Z - Return to main menu.
     public static void customer(){
+        int id;
         Scanner keyboard = new Scanner(System.in);
+        CustomerService custService = new CustomerService();
+        EditTable customerEditor = new EditTable();
+
         System.out.println("WELCOME CUSTOMER");
-        System.out.println("A - SEARCH ROOMS");
-        System.out.println("B - CREATE A BOOKING");
-        System.out.println("Z - RETURN");
-        System.out.print("ENTER: ");
+        System.out.print("ENTER ID: ");
+        id = Integer.parseInt(keyboard.nextLine());
 
-        String answer = keyboard.nextLine();
+        try {
+            if (!custService.customerExists(id)) {
+                System.out.println("CUSTOMER PROFILE NOT FOUND.");
+                System.out.println("PLEASE CREATE A PROFILE.");
+                customerEditor.createCustomer(id);
+            }
+            else {//Profile already exists.
+                System.out.println("WELCOME CUSTOMER");
+                System.out.println("A - SEARCH ROOMS AND CREATE A BOOKING");
+                System.out.println("B - EDIT CUSTOMER PROFILE");
+                System.out.println("C - DELETE CUSTOMER PROFILE");
+                System.out.println("Z - RETURN");
+                System.out.print("ENTER: ");
 
-        if(answer.compareToIgnoreCase("A") == 0) {//SEARCH ROOMS
-            //GET ALL SEARCH KEYS
-            //CHECK HOW MANY KEYS YOU HAVE
-            //ITERATE THROUGH LIST -2, EACH ELEMENT CHECK THE BIG CASE LIST
-            //KEEP ADDING TO STRING THAT WILL LATER BECOME THE QUERY I THINK
-            //FINISH ITERATING AND NOW THE SEARCH SHOULD BE START + END + WHATEVER ELSE OR NOT
-            ArrayList<String> search = new ArrayList<String>();
+                String answer = keyboard.nextLine();
 
-            String startDate, endDate, roomNum, hotelName, hotelNum, capacity, price, hotelRoomNum;
-            Scanner keyboard2 = new Scanner(System.in);
+                if (answer.compareToIgnoreCase("A") == 0) {//SEARCH ROOMS+CREATE BOOKINGS
+                    String startDate, endDate, capacity, city, hotelChain, rating, hotelRoomNum;
+                    List <String> search = new ArrayList<String>();
+                    Scanner keyboard2 = new Scanner(System.in);
 
+                    System.out.print("ENTER BOOKING/RENTING START DATE: ");
+                    startDate = keyboard2.nextLine();
+                    search.add(startDate);
+                    System.out.print("ENTER BOOKING/RENTING END DATE: ");
+                    endDate = keyboard2.nextLine();
+                    search.add(endDate);
+                    System.out.print("ENTER ROOM CAPACITY: ");
+                    capacity = keyboard2.nextLine();
+                    search.add(capacity);
+                    System.out.print("ENTER CITY: ");
+                    city = keyboard2.nextLine();
+                    search.add(city);
+                    System.out.print("ENTER HOTEL CHAIN: ");
+                    hotelChain = keyboard2.nextLine();
+                    search.add(hotelChain);
+                    System.out.print("ENTER RATING: ");
+                    rating = keyboard2.nextLine();
+                    search.add(rating);
+                    System.out.print("ENTER NUMBER OF ROOMS: ");
+                    hotelRoomNum = keyboard2.nextLine();
+                    search.add(hotelRoomNum);
 
-
-            return;
+                    return;
+                } else if (answer.compareToIgnoreCase("B") == 0) {//EDIT CUSTOMER PROFILE
+                    customerEditor.editCustomer(id);
+                    return;
+                } else if (answer.compareToIgnoreCase("C") == 0) {//DELETE CUSTOMER PROFILE
+                    customerEditor.deleteCustomer(id);
+                    return;
+                } else if (answer.compareToIgnoreCase("Z") == 0) {
+                    return;
+                } else {
+                    System.out.println("INCORRECT INPUT, PLEASE TRY AGAIN.");
+                    System.out.print("ENTER: ");
+                    answer = keyboard.nextLine();
+                }
+            }
         }
-
-        else if(answer.compareToIgnoreCase("B") == 0) {//CREATING A BOOKING
-            return;
-        }
-
-        else if(answer.compareToIgnoreCase("Z") == 0) {
-            return;
-        }
-
-        else{
-            System.out.println("INCORRECT INPUT, PLEASE TRY AGAIN.");
-            System.out.print("ENTER: ");
-            answer = keyboard.nextLine();
+        catch (Exception e){
+            e.printStackTrace();
         }
     }
 }
