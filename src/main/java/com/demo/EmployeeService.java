@@ -168,7 +168,7 @@ public class EmployeeService {
         ConnectionDB db = new ConnectionDB();
 
         // sql query
-        String sql = "UPDATE employee SET ? = ? WHERE id = ?;";
+        String sql = "UPDATE employee SET " + attName + " = '" + val + "' WHERE id = " + id;
 
         // try to connect to DB, catch any errors
         try {
@@ -177,9 +177,6 @@ public class EmployeeService {
 
             // prepare statement
             PreparedStatement stmt = con.prepareStatement(sql);
-            stmt.setObject(1, val);
-            stmt.setString(2, attName);
-            stmt.setInt(3, id);
 
             // execute statement
             stmt.executeUpdate();
