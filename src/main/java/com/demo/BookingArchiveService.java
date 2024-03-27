@@ -158,7 +158,7 @@ public class BookingArchiveService {
         ConnectionDB db = new ConnectionDB();
 
         // sql query
-        String sql = "UPDATE booking_archive SET ? = ? WHERE startDate = ? AND endDate = ? AND customerID = ?;";
+        String sql = "UPDATE booking_archive SET " + attName + " = '" + val + "' WHERE startDate = ? AND endDate = ? AND customerID = ?;";
 
         // try to connect to DB, catch any errors
         try {
@@ -167,11 +167,9 @@ public class BookingArchiveService {
 
             // prepare statement
             PreparedStatement stmt = con.prepareStatement(sql);
-            stmt.setString(1, attName);
-            stmt.setObject(2, val);
-            stmt.setDate(3, java.sql.Date.valueOf(sd.toString()));
-            stmt.setDate(4, java.sql.Date.valueOf(ed.toString()));
-            stmt.setInt(5, id);
+            stmt.setDate(1, java.sql.Date.valueOf(sd.toString()));
+            stmt.setDate(2, java.sql.Date.valueOf(ed.toString()));
+            stmt.setInt(3, id);
 
 
             // execute statement

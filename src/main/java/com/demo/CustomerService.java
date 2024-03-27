@@ -164,7 +164,7 @@ public class CustomerService {
         ConnectionDB db = new ConnectionDB();
 
         // sql query
-        String sql = "UPDATE customer SET ? = ? WHERE id = ?;";
+        String sql = "UPDATE customer SET " + attName + " = '" + val + "' WHERE id = ?;";
 
         // try to connect to DB, catch any errors
         try {
@@ -173,9 +173,7 @@ public class CustomerService {
 
             // prepare statement
             PreparedStatement stmt = con.prepareStatement(sql);
-            stmt.setObject(1, val);
-            stmt.setString(2, attName);
-            stmt.setInt(3, id);
+            stmt.setInt(1, id);
 
             // execute statement
             stmt.executeUpdate();

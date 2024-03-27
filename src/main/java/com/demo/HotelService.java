@@ -173,7 +173,7 @@ public class HotelService {
         ConnectionDB db = new ConnectionDB();
 
         // sql query
-        String sql = "UPDATE hotel SET " + attName + " = ? WHERE name = ? AND streetNum = ?;";
+        String sql = "UPDATE hotel SET " + attName + " = '" + val + "' WHERE name = ? AND streetNum = ?;";
 
         // try to connect to DB, catch any errors
         try {
@@ -182,9 +182,8 @@ public class HotelService {
 
             // prepare statement
             PreparedStatement stmt = con.prepareStatement(sql);
-            stmt.setObject(1, val);
-            stmt.setString(2, name);
-            stmt.setInt(3, streetNum);
+            stmt.setString(1, name);
+            stmt.setInt(2, streetNum);
 
             // execute statement
             stmt.executeUpdate();
