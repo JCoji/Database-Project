@@ -258,7 +258,7 @@ public class RoomService {
         ConnectionDB db = new ConnectionDB();
 
         // sql query
-        String sql = "INSERT INTO room (room_num, hotel_name, hotel_num, capacity, price, amenities, expandable, porblems) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
+        String sql = "INSERT INTO room (room_num, hotel_name, hotel_num, capacity, price, amenities, expandable, problems) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 
         // try connecting to DB, catch and trow any error
         try {
@@ -272,9 +272,9 @@ public class RoomService {
             stmt.setInt(3, room.getHotelNum());
             stmt.setInt(4, room.getCapacity());
             stmt.setInt(5, room.getPrice());
-            stmt.setObject(6, room.getAmenities(), VARCHAR, 100);
+            stmt.setString(6, room.getAmenities());
             stmt.setBoolean(7, room.isExpandable());
-            stmt.setObject(8, room.getProblems(), VARCHAR, 100);
+            stmt.setString(8, room.getProblems());
 
             // execute statement
             stmt.executeUpdate();
@@ -304,7 +304,7 @@ public class RoomService {
         ConnectionDB db = new ConnectionDB();
 
         // sql query
-        String sql = "UPDATE room SET ? = ? WHERE room_num = ? AND hotel_name = ? AND hotel_num = ?;";
+        String sql = "UPDATE room SET " + attName + " = '" + val + "' WHERE room_num = ? AND hotel_name = ? AND hotel_num = ?;";
 
         // try to connect to DB, catch any errors
         try {
@@ -313,11 +313,10 @@ public class RoomService {
 
             // prepare statement
             PreparedStatement stmt = con.prepareStatement(sql);
-            stmt.setString(1, attName);
-            stmt.setObject(2, val);
-            stmt.setInt(3, rn);
-            stmt.setString(4, hotelName);
-            stmt.setInt(5, hotelNum);
+
+            stmt.setInt(1, rn);
+            stmt.setString(2, hotelName);
+            stmt.setInt(3, hotelNum);
 
 
             // execute statement
