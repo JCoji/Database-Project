@@ -42,7 +42,7 @@ public class CustomerService {
                         rs.getString("province"),
                         rs.getString("streetName"),
                         rs.getInt("streetNum"),
-                        new Date(rs.getDate("registrationDate").toString())
+                        new Date(rs.getDate("registration_Date").toString())
                 );
 
                 // adds new customer to the list
@@ -193,6 +193,66 @@ public class CustomerService {
 
         }
 
+    }
+
+    public boolean customerExists(int enteredID) throws Exception {
+
+        // sql query
+        String sql = "SELECT * FROM customer";
+
+        // database connection object
+        ConnectionDB db = new ConnectionDB();
+
+        //List to store and return all bookings from database
+        boolean result = false;
+
+        //Try to connect to DB, catch any exceptions
+        try {
+            Connection con = db.getConnection();
+
+            //Prepares statement
+            PreparedStatement stmt = con.prepareStatement(sql);
+
+            // execute query
+            ResultSet rs = stmt.executeQuery();
+
+            // store customers in list
+            while (rs.next()) {
+                // create new customer
+                Customer c = new Customer(
+                        rs.getInt("id"),
+                        rs.getString("firstName"),
+                        rs.getString("surName"),
+                        rs.getString("city"),
+                        rs.getString("province"),
+                        rs.getString("streetName"),
+                        rs.getInt("streetNum"),
+                        new Date(rs.getDate("registration_Date").toString())
+                );
+
+                // adds new customer to the list
+                if(rs.getInt("id") == enteredID){
+                    result = true;
+                }
+            }
+
+            // close the result set
+            rs.close();
+
+            // close the statement
+            stmt.close();
+            con.close();
+            db.close();
+
+            // return the list of customers
+            return result;
+
+        } catch (Exception e) {
+
+            // throw the error
+            throw new Exception(e.getMessage());
+
+        }
     }
 
 }
