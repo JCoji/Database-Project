@@ -128,11 +128,11 @@ public class CustomerService {
             // prepare statement
             PreparedStatement stmt = con.prepareStatement(sql);
             stmt.setInt(1, customer.getId());
-            stmt.setObject(2, customer.getfName(), VARCHAR, 45);
-            stmt.setObject(3, customer.getsName(), VARCHAR, 45);
-            stmt.setObject(4, customer.getCity(), VARCHAR, 45);
-            stmt.setObject(5, customer.getProvince(), VARCHAR, 45);
-            stmt.setObject(6, customer.getStreetName(),VARCHAR, 45);
+            stmt.setString(2, customer.getfName());
+            stmt.setString(3, customer.getsName());
+            stmt.setString(4, customer.getCity());
+            stmt.setString(5, customer.getProvince());
+            stmt.setString(6, customer.getStreetName());
             stmt.setInt(7, customer.getStreetNum());
             stmt.setDate(8, java.sql.Date.valueOf(customer.getRegDate().toString()));
 

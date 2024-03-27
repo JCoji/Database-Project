@@ -130,14 +130,14 @@ public class EmployeeService {
             // prepare statement
             PreparedStatement stmt = con.prepareStatement(sql);
             stmt.setInt(1, employee.getId());
-            stmt.setObject(2, employee.getfName(), VARCHAR, 45);
-            stmt.setObject(3, employee.getsName(), VARCHAR, 45);
-            stmt.setObject(4, employee.getCity(), VARCHAR, 45);
-            stmt.setObject(5, employee.getProvince(), VARCHAR, 45);
-            stmt.setObject(6, employee.getStreetName(),VARCHAR, 45);
+            stmt.setString(2, employee.getfName());
+            stmt.setString(3, employee.getsName());
+            stmt.setString(4, employee.getCity());
+            stmt.setString(5, employee.getProvince());
+            stmt.setString(6, employee.getStreetName());
             stmt.setInt(7, employee.getStreetNum());
-            stmt.setObject(8, employee.getPosition(), VARCHAR, 45);
-            stmt.setObject(9, employee.getHotelName(), VARCHAR, 45);
+            stmt.setString(8, employee.getPosition());
+            stmt.setString(9, employee.getHotelName());
             stmt.setInt(10, employee.getHotelNum());
 
             // execute statement
