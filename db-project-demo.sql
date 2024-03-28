@@ -279,6 +279,33 @@ GROUP BY
 	hotel_num;
 
 
+CREATE OR REPLACE VIEW room_rental_info AS
+SELECT r.room_num,
+       r.hotel_name,
+       r.hotel_num,
+       r.capacity,
+       r.price,
+       r.amenities,
+       r.expandable,
+       r.problems,
+       r.isAvailable,
+       h.chain_name,
+       h.city,
+       h.number_of_rooms,
+       h.rating,
+       re.startDate AS renting_start_date,
+       re.endDate AS renting_end_date,
+       b.startDate AS booking_start_date,
+       b.endDate AS booking_end_date
+FROM room r
+LEFT JOIN renting re ON r.room_num = re.room_num AND r.hotel_name = re.hotel_name AND r.hotel_num = re.hotel_num
+LEFT JOIN booking b ON r.room_num = b.room_num AND r.hotel_name = b.hotel_name AND r.hotel_num = b.hotel_num
+LEFT JOIN hotel h ON r.hotel_name = h.name AND r.hotel_num = h.streetNum;
+
+
+
+
+
 -- ----------------------------
 -- Records of Hotel Chains
 -- ----------------------------
