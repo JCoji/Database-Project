@@ -205,7 +205,7 @@ public class BookingService {
             stmt.setInt(3, booking.getCustomerID());
             stmt.setDouble(4, booking.getRoomPrice());
             stmt.setInt(5, booking.getRoomNum());
-            stmt.setObject(6, booking.getHotelName(), VARCHAR, 45);
+            stmt.setString(6, booking.getHotelName());
             stmt.setInt(7, booking.getHotelNum());
 
             // execute statement

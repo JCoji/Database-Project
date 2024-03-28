@@ -284,6 +284,8 @@ public class DatabaseProject {
         int id;
         Scanner keyboard = new Scanner(System.in);
         CustomerService custService = new CustomerService();
+        RoomService roomService = new RoomService();
+        BookingService bookService = new BookingService();
         EditTable customerEditor = new EditTable();
 
         System.out.println("WELCOME CUSTOMER");
@@ -308,15 +310,31 @@ public class DatabaseProject {
 
                 if (answer.compareToIgnoreCase("A") == 0) {//SEARCH ROOMS+CREATE BOOKINGS
                     String startDate, endDate, capacity, city, hotelChain, rating, hotelRoomNum;
-                    List <String> search = new ArrayList<String>();
+                    Date start, end;
+                    ArrayList <String> search = new ArrayList<String>();
+                    List <Room> results = new ArrayList<Room>();
+                    Booking newBooking;
+                    int opt;
                     Scanner keyboard2 = new Scanner(System.in);
 
-                    System.out.print("ENTER BOOKING/RENTING START DATE: ");
+                    System.out.print("ENTER BOOKING/RENTING START DATE (YYYY-MM-DD): ");
                     startDate = keyboard2.nextLine();
+                    while (startDate.equals("")){
+                        System.out.println("A START DATE IS REQUIRED. PLEASE TRY AGAIN.");
+                        System.out.print("ENTER BOOKING/RENTING START DATE (YYYY-MM-DD): ");
+                        startDate = keyboard2.nextLine();
+                    }
                     search.add(startDate);
-                    System.out.print("ENTER BOOKING/RENTING END DATE: ");
+
+                    System.out.print("ENTER BOOKING/RENTING END DATE (YYYY-MM-DD): ");
                     endDate = keyboard2.nextLine();
+                    while (endDate.equals("")){
+                        System.out.println("AN END DATE IS REQUIRED. PLEASE TRY AGAIN.");
+                        System.out.print("ENTER BOOKING/RENTING END DATE (YYYY-MM-DD): ");
+                        endDate = keyboard2.nextLine();
+                    }
                     search.add(endDate);
+
                     System.out.print("ENTER ROOM CAPACITY: ");
                     capacity = keyboard2.nextLine();
                     search.add(capacity);
@@ -332,6 +350,33 @@ public class DatabaseProject {
                     System.out.print("ENTER NUMBER OF ROOMS: ");
                     hotelRoomNum = keyboard2.nextLine();
                     search.add(hotelRoomNum);
+
+                    System.out.println("SEARCHING...\n");
+                    System.out.println("ROOMS: ");
+
+                    results = roomService.getRoomFromQuery(search);
+
+                    for (int i = 0; i < results.size(); i++){
+                        System.out.println(i + ": " + results.get(i));
+                    }
+
+                    System.out.println("SELECT THE ROOM THAT YOU WISH TO BOOK: ");
+                    start = new Date(startDate);
+                    end = new Date(endDate);
+                    opt = Integer.parseInt(keyboard2.nextLine());
+
+                    newBooking = new Booking(start, end, id, results.get(opt).getPrice(),
+                            results.get(opt).getRoomNum(), results.get(opt).getHotelName(),
+                            results.get(opt).getHotelNum());
+
+                    try{
+                        bookService.createBooking(newBooking);
+                    }
+                    catch (Exception e){
+                        e.printStackTrace();
+                    }
+
+                    System.out.println("NEW BOOKING CREATED.");
 
                     return;
                 } else if (answer.compareToIgnoreCase("B") == 0) {//EDIT CUSTOMER PROFILE
